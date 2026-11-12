@@ -1,0 +1,3 @@
+/home/pingo/Documents/university/CG2026/Weekly Workbooks/01 Introduction and Orientation/extras/RenderProject/build/CMakeFiles/RenderProject.dir
+/home/pingo/Documents/university/CG2026/Weekly Workbooks/01 Introduction and Orientation/extras/RenderProject/build/CMakeFiles/edit_cache.dir
+/home/pingo/Documents/university/CG2026/Weekly Workbooks/01 Introduction and Orientation/extras/RenderProject/build/CMakeFiles/rebuild_cache.dir
