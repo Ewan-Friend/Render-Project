@@ -46,11 +46,10 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 cameraPosition, glm::ve
 bool RaytraceRenderer::inShadow(const glm::vec3 &point, const glm::vec3 &normal, int triIndex) {
     float offsetDistance = 0.001f;
 
+    // Find vector from point to light
     glm::vec3 toLight = lightPos - point; 
     float distanceFromLight = glm::length(toLight);
     glm::vec3 lightDirection = glm::normalize(toLight);
-
-//    if (glm::dot(normal, lightDirection) <= 0.0f) return true;
 
     // See if triangle face is "facing" the light
     bool lightSide  = glm::dot(normal, lightPos - point) > 0;
@@ -64,6 +63,7 @@ bool RaytraceRenderer::inShadow(const glm::vec3 &point, const glm::vec3 &normal,
                                                 triangles,
                                                 triIndex
                                                 );
+    // "In shadow" if the object is in the way of the light
     return NearestCover.distanceFromCamera < distanceFromLight - offsetDistance;
 };
 
@@ -91,7 +91,7 @@ float RaytraceRenderer::specularLight(const glm::vec3 &point, glm::vec3 normal, 
     glm::vec3 reflection = lightDirection - 2.0f * normal * (glm::dot(lightDirection, normal));
 
     float specular = glm::dot(reflection, view);
-    return std::pow(specular, N);
+    return (shading != ShadingMethod::Gouraud) ? std::pow(specular, N) : 0.0f;
 }
 
 // !!! taken from utils.h but changed to vec3 !!!
@@ -192,7 +192,7 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
     window.clearPixels();
     if (seenVersion != SCENE_VERSION) {
         triangles = SCENE_TRIANGLES;
-        vertexNormals = findVertexNormals(triangles);
+        vertexNormals = SCENE_VERTEX_NORMALS;
         seenVersion = SCENE_VERSION;
     }
     //if (!loaded){
@@ -203,7 +203,7 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
         //loaded = true;
     //}
 
-    #pragma omp parallel for schedule(dynamic, 4)
+    #pragma omp parallel for schedule(dynamic, 16)
     for (int x = 0; x < WIDTH; x++){
         for (int y = 0; y < HEIGHT; y++){
             glm::vec3 direction = camera.pixelToRayDir(x, y); 

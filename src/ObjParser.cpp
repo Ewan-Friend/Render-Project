@@ -4,6 +4,7 @@
 #include "ModelTriangle.h"
 #include "glm/detail/func_geometric.hpp"
 #include "glm/detail/type_vec.hpp"
+#include <array>
 #include <cstddef>
 #include <iostream>
 #include <fstream>
@@ -13,9 +14,12 @@
 #include <vector>
 
 /// Parse object files into a set of trian
-std::vector<ModelTriangle> parseObj(const std::string &filename, const std::unordered_map<std::string, Colour> &pallete){
+ModelData parseObj(const std::string &filename, const std::unordered_map<std::string, Colour> &pallete){
 
     std::vector<ModelTriangle> triangles;
+    std::vector<glm::vec3> definedNormals;
+    std::vector<std::array<glm::vec3, 3>> vertexNormals;
+
     std::string line;
     std::vector<glm::vec3> vertices;
     Colour colour(255, 0, 0);
@@ -40,12 +44,25 @@ std::vector<ModelTriangle> parseObj(const std::string &filename, const std::unor
             ss >> x >> y >> z;
             vertices.push_back(glm::vec3(x * scale_factor, y * scale_factor, z * scale_factor));
         }
+        if (token == "vn") {
+            float nx, ny, nz;
+            ss >> nx >> ny >> nz;
+            definedNormals.push_back(glm::normalize(glm::vec3(nx, ny, nz)));
+        }
         if (token == "f") {
             std::string a, b, c; 
             ss >> a >> b >> c;
+            // Takes the indexes as the values before the first slash 
             int ai = std::stoi(a.substr(0, a.find("/"))) - 1;
             int bi = std::stoi(b.substr(0, b.find("/"))) - 1;
             int ci = std::stoi(c.substr(0, c.find("/"))) - 1;
+
+            if (!definedNormals.empty()){
+                int nai = std::stoi(a.substr(a.rfind("/") + 1)) - 1;
+                int nbi = std::stoi(b.substr(b.rfind("/") + 1)) - 1;
+                int nci = std::stoi(c.substr(c.rfind("/") + 1)) - 1;
+                vertexNormals.push_back({definedNormals[nai], definedNormals[nbi], definedNormals[nci]});
+            }
 
             glm::vec3 va = vertices[ai];
             glm::vec3 vb = vertices[bi];
@@ -60,7 +77,16 @@ std::vector<ModelTriangle> parseObj(const std::string &filename, const std::unor
         }
     }
 
-    return triangles;
+    if (vertexNormals.empty()) {
+        vertexNormals = findVertexNormals(triangles);
+    }
+
+    return ModelData{triangles, vertexNormals};
+}
+
+//TODO:: CHANGE BACK TO DEFAULT ARGUMENT
+ModelData parseObj(const std::string &filename) {
+    return parseObj(filename, {});
 }
 
 /// Parse material files into a pallete

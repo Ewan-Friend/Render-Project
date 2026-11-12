@@ -17,11 +17,15 @@ public:
     bool spinning = false;
     /// Flag if camera movement defaults too looking at a position
     bool isLookingAt = true;
+    /// Position the camera should be looking at when isLookingAt is true
+    glm::vec3 lookTarget = glm::vec3(0);
 
     static glm::mat3 rotX(float theta);
     static glm::mat3 rotY(float theta);
-    static glm::mat3 lookAt(const glm::vec3 &from, const glm::vec3 &point = glm::vec3(0));
-
+    static glm::mat3 lookAt(const glm::vec3 &from, const glm::vec3 &point);
+    void toggleLookAt();
+    void snapLook();
+    
     void translate(const glm::vec3 &delta);
     void pan(float theta);
     void tilt(float theta);

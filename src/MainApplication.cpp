@@ -1,10 +1,6 @@
 #include "Colour.h"
 #include "Globals.h"
-#include "RasterisedRenderer.h"
 #include "Renderer.h"
-#include "RedNoiseRenderer.h"
-#include "BlueNoiseRenderer.h"
-#include "ColourSpectrumRenderer.h"
 #include "RasterisedRenderer.h"
 #include "WireframeRenderer.h"
 #include "ModelRenderer.h"
@@ -26,13 +22,12 @@ extern const int HEIGHT = 240;
 extern const std::string COR_OBJECT = "./cornell-box.obj";
 extern const std::string COR_MATERIAL = "./cornell-box.mtl";
 extern const std::string SPHERE_OBJECT = "./sphere.obj";
+extern const std::string BUNNY_OBJECT = "./models/bunny/bunny.obj";
+extern const std::string BUNNY_MATERIAL = "./models/bunny/bunny.mtl";
 
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT);
 Camera camera;
 
-RedNoiseRenderer redNoise = RedNoiseRenderer();
-BlueNoiseRenderer blueNoise = BlueNoiseRenderer();
-ColourSpectrumRenderer colourSpectrum = ColourSpectrumRenderer();
 RasterisedRenderer rasterisedRenderer = RasterisedRenderer();
 ModelRenderer modelRenderer = ModelRenderer(camera);
 RaytraceRenderer raytraceRenderer = RaytraceRenderer(camera);
@@ -49,27 +44,27 @@ float theta_step = glm::radians(5.0f);
 
 // TODO: DELETE MODEL CHANGER BEFORE SUBMISSION
 std::vector<ModelTriangle> SCENE_TRIANGLES;
+std::vector<std::array<glm::vec3, 3>> SCENE_VERTEX_NORMALS;
 int SCENE_VERSION = 0;
 struct ModelEntry { std::string obj; std::string mtl; };
 std::vector<ModelEntry> MODELS = {
     { COR_OBJECT,    COR_MATERIAL },
     { SPHERE_OBJECT, "" },
+    { BUNNY_OBJECT, BUNNY_MATERIAL},
 };
 int currentModel = 0;
 void loadScene(int index) {
     const ModelEntry &m = MODELS[index];
-    if (m.mtl.empty()) SCENE_TRIANGLES = parseObj(m.obj);
-    else               SCENE_TRIANGLES = parseObj(m.obj, parseMat(m.mtl));
+    ModelData data = m.mtl.empty() ? parseObj(m.obj) : parseObj(m.obj, parseMat(m.mtl));
+    SCENE_TRIANGLES = data.triangles;
+    SCENE_VERTEX_NORMALS = data.vertexNormals;
     SCENE_VERSION++;
 }
 
 void handleEvent(SDL_Event event, DrawingWindow &window) {
 	if (event.type == SDL_KEYDOWN) {
-        // TODO: MAKE A HELPER FUNCTION FOR THIS
-        if (event.key.keysym.sym == SDLK_l) {
-            camera.isLookingAt = !camera.isLookingAt; 
-            camera.lookAt(camera.position);
-        }
+        //TODO: CHANGE 'e' TO 'l' HERE
+        if (event.key.keysym.sym == SDLK_e) camera.toggleLookAt();
         else if (event.key.keysym.sym == SDLK_LEFT) camera.translate(glm::vec3(-cameraStepSize, 0, 0));
         else if (event.key.keysym.sym == SDLK_RIGHT) camera.translate(glm::vec3(cameraStepSize, 0, 0));
         else if (event.key.keysym.sym == SDLK_UP) camera.translate(glm::vec3(0, cameraStepSize, 0));

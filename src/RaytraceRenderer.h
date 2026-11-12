@@ -19,7 +19,7 @@ class RaytraceRenderer: public Renderer {
         std::vector<ModelTriangle> triangles;
         std::vector<std::array<glm::vec3, 3>> vertexNormals;
         // bool loaded = false;
-        glm::vec3 lightPos = glm::vec3(0, 0.4, 1);
+        glm::vec3 lightPos = glm::vec3(0, 0.4, 2);
         enum class ShadingMethod { Flat = 0, Gouraud = 1, Phong = 2 };
         ShadingMethod shading = ShadingMethod::Flat;
     private:
@@ -27,7 +27,7 @@ class RaytraceRenderer: public Renderer {
         float renderDistance = FLT_MAX;
         float lightStrength = 20.0f;
         int specularExponent = 256;
-        float minBrightnessThreshold = 0.2f;
+        float minBrightnessThreshold = 0.15f;
 
         glm::vec3 lastPos;
         glm::mat3 lastOri;
