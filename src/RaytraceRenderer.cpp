@@ -190,18 +190,11 @@ glm::vec3 RaytraceRenderer::phongShading(
 void RaytraceRenderer::draw(DrawingWindow &window) {
     // camera.update();
     window.clearPixels();
-    if (seenVersion != SCENE_VERSION) {
+    if (!loaded) {
         triangles = SCENE_TRIANGLES;
         vertexNormals = SCENE_VERTEX_NORMALS;
-        seenVersion = SCENE_VERSION;
+        loaded = true;
     }
-    //if (!loaded){
-//        std::unordered_map<std::string, Colour> pallete = parseMat(COR_MATERIAL);
-//        triangles = parseObj(COR_OBJECT, pallete);
-        //triangles = parseObj(SPHERE_OBJECT);
-        //vertexNormals = findVertexNormals(triangles);
-        //loaded = true;
-    //}
 
     #pragma omp parallel for schedule(dynamic, 16)
     for (int x = 0; x < WIDTH; x++){

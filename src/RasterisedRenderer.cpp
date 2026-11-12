@@ -16,12 +16,7 @@ static std::vector<float> depthBuffer(WIDTH * HEIGHT, 0.0f);
 void RasterisedRenderer::draw(DrawingWindow &window) {
     window.clearPixels();
     std::fill(depthBuffer.begin(), depthBuffer.end(), 0.0f);
-
-    // CanvasTriangle tri(CanvasPoint(160, 10), CanvasPoint(300, 230), CanvasPoint(10, 150));
-    // CanvasTriangle tex(CanvasPoint(195, 5),  CanvasPoint(395, 380), CanvasPoint(65, 330));
-    // RasterisedRenderer::createTexture(tri, tex, window);
 }
-
 
 void RasterisedRenderer::createLine(CanvasPoint from, CanvasPoint to, Colour c, DrawingWindow &window) {
     uint32_t colour = (255 << 24) + (c.red << 16) + (c.green << 8) + c.blue;

@@ -2,6 +2,7 @@
 #include "Globals.h"
 #include "Renderer.h"
 #include "RasterisedRenderer.h"
+#include "SceneBuilder.h"
 #include "WireframeRenderer.h"
 #include "ModelRenderer.h"
 #include "RaytraceRenderer.h"
@@ -27,6 +28,7 @@ extern const std::string BUNNY_MATERIAL = "./models/bunny/bunny.mtl";
 
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT);
 Camera camera;
+SceneBuilder sceneBuilder = SceneBuilder();
 
 RasterisedRenderer rasterisedRenderer = RasterisedRenderer();
 ModelRenderer modelRenderer = ModelRenderer(camera);
@@ -42,23 +44,14 @@ float cameraStepSize = 0.25;
 float lightStepSize = 0.1;
 float theta_step = glm::radians(5.0f);
 
-// TODO: DELETE MODEL CHANGER BEFORE SUBMISSION
 std::vector<ModelTriangle> SCENE_TRIANGLES;
 std::vector<std::array<glm::vec3, 3>> SCENE_VERTEX_NORMALS;
-int SCENE_VERSION = 0;
-struct ModelEntry { std::string obj; std::string mtl; };
-std::vector<ModelEntry> MODELS = {
-    { COR_OBJECT,    COR_MATERIAL },
-    { SPHERE_OBJECT, "" },
-    { BUNNY_OBJECT, BUNNY_MATERIAL},
-};
-int currentModel = 0;
-void loadScene(int index) {
-    const ModelEntry &m = MODELS[index];
-    ModelData data = m.mtl.empty() ? parseObj(m.obj) : parseObj(m.obj, parseMat(m.mtl));
-    SCENE_TRIANGLES = data.triangles;
-    SCENE_VERTEX_NORMALS = data.vertexNormals;
-    SCENE_VERSION++;
+// PICK SCENE HERE
+// TODO: ADD ARGUMENT TO PICK SCENE (MAYBE OVERKILL NO?)
+void loadScene() {
+    const ModelData scene = sceneBuilder.cornellBunnyCage(); 
+    SCENE_TRIANGLES = scene.triangles;
+    SCENE_VERTEX_NORMALS = scene.vertexNormals;
 }
 
 void handleEvent(SDL_Event event, DrawingWindow &window) {
@@ -105,17 +98,13 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
             (raytraceRenderer.shading != RaytraceRenderer::ShadingMethod::Phong) ? 
                 raytraceRenderer.shading = RaytraceRenderer::ShadingMethod::Phong : 
                 raytraceRenderer.shading = RaytraceRenderer::ShadingMethod::Flat; 
-        //TODO: DELETE MODEL CHANGER BEFORE SUBMISSION
-        else if (event.key.keysym.sym == SDLK_m) {
-            currentModel = (currentModel + 1) % MODELS.size();
-            loadScene(currentModel);
-        }
 	}
 }
 
 
 int main(int argc, char *argv[]) {
 	SDL_Event event;
+    loadScene();
 	while (true) {
 		// We MUST poll for events - otherwise the window will freeze !
 		if (window.pollForInputEvents(event)) handleEvent(event, window);

@@ -6,12 +6,14 @@
 #include "glm/detail/type_vec.hpp"
 #include <array>
 #include <cstddef>
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <cstdlib>
 
 /// Parse object files into a set of trian
 ModelData parseObj(const std::string &filename, const std::unordered_map<std::string, Colour> &pallete){
@@ -22,7 +24,15 @@ ModelData parseObj(const std::string &filename, const std::unordered_map<std::st
 
     std::string line;
     std::vector<glm::vec3> vertices;
+    // Fun random colour for no material!!!    
     Colour colour(255, 0, 0);
+    Colour fallbacks[] = {
+        Colour(255, 220, 40), Colour(255, 60, 60), Colour(60, 120, 255),
+        Colour(60, 255, 60), Colour(255, 60, 255), Colour(40, 255, 255)
+    };
+    if (pallete.empty()){
+        colour = fallbacks[rand() % 6];
+    }
 
     std::ifstream ObjFile(filename);
 
@@ -58,7 +68,14 @@ ModelData parseObj(const std::string &filename, const std::unordered_map<std::st
             int ci = std::stoi(c.substr(0, c.find("/"))) - 1;
 
             if (!definedNormals.empty()){
-                int nai = std::stoi(a.substr(a.rfind("/") + 1)) - 1;
+                int nai = std::stoi(a.substr(a.rfind("/") + 1)) - 1;Colour colour(255, 0, 0);
+if (pallete.empty()) {
+    Colour bright[] = {
+        Colour(255, 60, 60), Colour(60, 255, 60), Colour(60, 120, 255),
+        Colour(255, 220, 40), Colour(255, 60, 255), Colour(40, 255, 255)
+    };
+    colour = bright[rand() % 6];
+}
                 int nbi = std::stoi(b.substr(b.rfind("/") + 1)) - 1;
                 int nci = std::stoi(c.substr(c.rfind("/") + 1)) - 1;
                 vertexNormals.push_back({definedNormals[nai], definedNormals[nbi], definedNormals[nci]});

@@ -19,15 +19,15 @@ class RaytraceRenderer: public Renderer {
         std::vector<ModelTriangle> triangles;
         std::vector<std::array<glm::vec3, 3>> vertexNormals;
         // bool loaded = false;
-        glm::vec3 lightPos = glm::vec3(0, 0.4, 2);
+        glm::vec3 lightPos = glm::vec3(0.4, 0.4, 1.9);
         enum class ShadingMethod { Flat = 0, Gouraud = 1, Phong = 2 };
         ShadingMethod shading = ShadingMethod::Flat;
     private:
         Camera &camera;
         float renderDistance = FLT_MAX;
-        float lightStrength = 20.0f;
+        float lightStrength = 25.0f;
         int specularExponent = 256;
-        float minBrightnessThreshold = 0.15f;
+        float minBrightnessThreshold = 0.20;
 
         glm::vec3 lastPos;
         glm::mat3 lastOri;
@@ -53,7 +53,6 @@ class RaytraceRenderer: public Renderer {
             glm::vec3 hitPoint,
             std::array<glm::vec3, 3> vNormals
         );
-        
-        // TODO: DELETE BEFORE SUBMISSION
-        int seenVersion = -1;
+
+        bool loaded = false;
 };
