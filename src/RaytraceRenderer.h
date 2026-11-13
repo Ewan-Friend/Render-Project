@@ -24,7 +24,7 @@ class RaytraceRenderer: public Renderer {
         std::unordered_map<std::string, TextureMap> textures;
 
         /// Base position of the light
-        glm::vec3 lightPos = glm::vec3(0.4, 0.4, 1.9);
+        glm::vec3 lightPos = glm::vec3(0, 0.8, 1);
         /// Types of shading that the renderer can take
         enum class ShadingMethod { Flat = 0, Gouraud = 1, Phong = 2 };
         /// What the current shading method is
@@ -34,11 +34,11 @@ class RaytraceRenderer: public Renderer {
         /// The maximum distance the camera will render
         float renderDistance = FLT_MAX;
         /// How bright the light is
-        float lightStrength = 25.0f;
+        float lightStrength = 32.0f;
         /// "Strength" of the specular lighting (shininess)
         int specularExponent = 256;
         /// How dark a pixel can be
-        float minBrightnessThreshold = 0.12;
+        float minBrightnessThreshold = 0.20;
         /// How spread out the light source is (for soft shadows)
         float lightSpread = 0.15;
 
