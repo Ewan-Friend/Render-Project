@@ -43,11 +43,11 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 cameraPosition, glm::ve
 }
 
 /// Check if the point is in shadow 
-bool RaytraceRenderer::inShadow(const glm::vec3 &point, const glm::vec3 &normal, int triIndex) {
+bool RaytraceRenderer::inShadow(const glm::vec3 &point, const glm::vec3 &normal, int triIndex, const glm::vec3 &light) {
     float offsetDistance = 0.001f;
 
     // Find vector from point to light
-    glm::vec3 toLight = lightPos - point; 
+    glm::vec3 toLight = light - point; 
     float distanceFromLight = glm::length(toLight);
     glm::vec3 lightDirection = glm::normalize(toLight);
 
@@ -66,6 +66,21 @@ bool RaytraceRenderer::inShadow(const glm::vec3 &point, const glm::vec3 &normal,
     // "In shadow" if the object is in the way of the light
     return NearestCover.distanceFromCamera < distanceFromLight - offsetDistance;
 };
+
+/// Averages the how many "shadow rays"" hit the lights 
+float RaytraceRenderer::ShadowStrength(const glm::vec3 point, const glm::vec3 &normal, int triIndex){
+    int totalChecked = 0;
+    int totalBlocked = 0;
+    // Light are spread along the horizontal plane here (like the ceiling light)
+    for (int x = -1; x <= 1; x++){
+        for (int z = -1; z <= 1; z++){
+            glm::vec3 smallLight = lightPos + glm::vec3(x * lightSpread, 0.0f, z * lightSpread);
+            if (inShadow(point, normal, triIndex, smallLight)) totalBlocked++;
+            totalChecked++;
+        }
+    }
+    return ((float)totalBlocked / totalChecked);
+}
 
 /// Finds the angle of incidence between the normal of a face and the light
 float RaytraceRenderer::angleOfIncidence(const glm::vec3 &point, glm::vec3 normal) {
@@ -145,7 +160,7 @@ glm::vec3 RaytraceRenderer::calculatePointColour(
 {
     // Diffuse lighting (now uses the passed-in vertex normal)
     float incidence = angleOfIncidence(point, normal);
-    float direct = inShadow(point, normal, index) ? 0.0f : lightLevel(point);
+    float direct = (1 - ShadowStrength(point, normal, index)) * lightLevel(point);
     float brightness = std::max(minBrightnessThreshold, incidence * direct);
 
     // Specular lighting (fancy reflections)

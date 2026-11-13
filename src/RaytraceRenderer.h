@@ -23,22 +23,33 @@ class RaytraceRenderer: public Renderer {
         std::vector<std::string> textureTriangles;
         std::unordered_map<std::string, TextureMap> textures;
 
+        /// Base position of the light
         glm::vec3 lightPos = glm::vec3(0.4, 0.4, 1.9);
+        /// Types of shading that the renderer can take
         enum class ShadingMethod { Flat = 0, Gouraud = 1, Phong = 2 };
+        /// What the current shading method is
         ShadingMethod shading = ShadingMethod::Flat;
     private:
         Camera &camera;
+        /// The maximum distance the camera will render
         float renderDistance = FLT_MAX;
+        /// How bright the light is
         float lightStrength = 25.0f;
+        /// "Strength" of the specular lighting (shininess)
         int specularExponent = 256;
-        float minBrightnessThreshold = 0.20;
+        /// How dark a pixel can be
+        float minBrightnessThreshold = 0.12;
+        /// How spread out the light source is (for soft shadows)
+        float lightSpread = 0.15;
 
+        //TODO: use these for optimisation
         glm::vec3 lastPos;
         glm::mat3 lastOri;
         bool hasRendered = false;
 
         float lightLevel(const glm::vec3 &point);
-        bool inShadow(const glm::vec3 &point, const glm::vec3 &normal, int triIndex);
+        bool inShadow(const glm::vec3 &point, const glm::vec3 &normal, int triIndex, const glm::vec3 &light);
+        float ShadowStrength(const glm::vec3 point, const glm::vec3 &normal, int triIndex);
         float angleOfIncidence(const glm::vec3 &point, glm::vec3 normal);
         float specularLight(const glm::vec3 &point, glm::vec3 normal, int N, glm::vec3 view);
         Colour getTextureColour(
