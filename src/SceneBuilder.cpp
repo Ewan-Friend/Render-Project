@@ -3,6 +3,7 @@
 #include "Globals.h"
 #include "glm/detail/type_vec.hpp"
 #include <array>
+#include <string>
 
 /// Create a model from obj and material files
 SceneBuilder& SceneBuilder::createObject(
@@ -24,12 +25,16 @@ SceneBuilder& SceneBuilder::createObject(
         vertexNormals.push_back(vn);
     }
 
+    for (const std::string &tx: data.textureTriangles){
+        textureTriangles.push_back(tx);
+    }
+
     return *this;
 }
 
 /// Return model data from the scene
 ModelData SceneBuilder::build() const {
-    return {triangles, vertexNormals};
+    return {triangles, vertexNormals, textureTriangles};
 }
 
 /// SCENE DESCRIPTION:
@@ -58,3 +63,11 @@ ModelData SceneBuilder::cornellBunnyCage() {
         .build();
     return scene;
 } 
+
+/// SCENE DESCRIPTION
+/// A cornell box, where the floor is a cobble texture
+ModelData SceneBuilder::texturedFloor() {
+    ModelData scene = createObject(TEX_OBJECT, TEX_MATERIAL)
+        .build();
+    return scene;
+}

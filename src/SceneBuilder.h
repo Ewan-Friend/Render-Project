@@ -10,6 +10,7 @@ public:
     // TODO: CREATE AN ENUM TO CHOOSE MATERIAL
     std::vector<ModelTriangle> triangles;
     std::vector<std::array<glm::vec3, 3>> vertexNormals;
+    std::vector<std::string> textureTriangles;
 
     SceneBuilder& createObject(const std::string &objFile,
                                const std::string &mtlFile = "",
@@ -22,6 +23,7 @@ public:
     ModelData cornellScene();
     ModelData cornellAndSphereScene();
     ModelData cornellBunnyCage();
+    ModelData texturedFloor();
 
     // ModelData kitchenSink();
 };

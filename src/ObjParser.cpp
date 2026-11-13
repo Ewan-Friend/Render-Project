@@ -2,6 +2,7 @@
 #include "ObjParser.h"
 #include "Colour.h"
 #include "ModelTriangle.h"
+#include "TexturePoint.h"
 #include "glm/detail/func_geometric.hpp"
 #include "glm/detail/type_vec.hpp"
 #include <array>
@@ -15,24 +16,26 @@
 #include <vector>
 #include <cstdlib>
 
-/// Parse object files into a set of trian
-ModelData parseObj(const std::string &filename, const std::unordered_map<std::string, Colour> &pallete){
+// TODO: MAYBE REMOVE THIS FUNCTION AND REFACTOR
+TexturePoint texPoint(const std::vector<glm::vec2> &uvs, const std::string &token) {
+    size_t slash = token.find('/');
+    if (slash == std::string::npos || token[slash + 1] == '/') return TexturePoint(0, 0);
+    glm::vec2 uv = uvs[std::stoi(token.substr(slash + 1)) - 1];
+    return TexturePoint(uv.x, 1.0f - uv.y);
+}
 
+/// Parse object files into a set of triangles
+ModelData parseObj(const std::string &filename, const std::unordered_map<std::string, Material> &pallete){
     std::vector<ModelTriangle> triangles;
     std::vector<glm::vec3> definedNormals;
     std::vector<std::array<glm::vec3, 3>> vertexNormals;
+    std::vector<glm::vec2> baryWeightsUV;
+    std::vector<std::string> textureTriangles;
 
     std::string line;
     std::vector<glm::vec3> vertices;
-    // Fun random colour for no material!!!    
-    Colour colour(255, 0, 0);
-    Colour fallbacks[] = {
-        Colour(255, 220, 40), Colour(255, 60, 60), Colour(60, 120, 255),
-        Colour(60, 255, 60), Colour(255, 60, 255), Colour(40, 255, 255)
-    };
-    if (pallete.empty()){
-        colour = fallbacks[rand() % 6];
-    }
+    Colour colour(240, 120, 40);
+    std::string texture = "";
 
     std::ifstream ObjFile(filename);
 
@@ -47,7 +50,11 @@ ModelData parseObj(const std::string &filename, const std::unordered_map<std::st
         if (token == "usemtl") {
             std::string material;
             ss >> material;
-            colour = pallete.at(material);
+            auto mat = pallete.find(material);
+            if (mat != pallete.end()){
+                colour = mat->second.colour;
+                texture = mat->second.texture;
+            }
         }
         if (token == "v") {
             float x, y, z;
@@ -59,6 +66,11 @@ ModelData parseObj(const std::string &filename, const std::unordered_map<std::st
             ss >> nx >> ny >> nz;
             definedNormals.push_back(glm::normalize(glm::vec3(nx, ny, nz)));
         }
+        if (token == "vt") {
+            float u, v;
+            ss >> u >> v;
+            baryWeightsUV.push_back(glm::vec2(u, v));
+        }
         if (token == "f") {
             std::string a, b, c; 
             ss >> a >> b >> c;
@@ -68,14 +80,7 @@ ModelData parseObj(const std::string &filename, const std::unordered_map<std::st
             int ci = std::stoi(c.substr(0, c.find("/"))) - 1;
 
             if (!definedNormals.empty()){
-                int nai = std::stoi(a.substr(a.rfind("/") + 1)) - 1;Colour colour(255, 0, 0);
-if (pallete.empty()) {
-    Colour bright[] = {
-        Colour(255, 60, 60), Colour(60, 255, 60), Colour(60, 120, 255),
-        Colour(255, 220, 40), Colour(255, 60, 255), Colour(40, 255, 255)
-    };
-    colour = bright[rand() % 6];
-}
+                int nai = std::stoi(a.substr(a.rfind("/") + 1)) - 1;
                 int nbi = std::stoi(b.substr(b.rfind("/") + 1)) - 1;
                 int nci = std::stoi(c.substr(c.rfind("/") + 1)) - 1;
                 vertexNormals.push_back({definedNormals[nai], definedNormals[nbi], definedNormals[nci]});
@@ -90,7 +95,14 @@ if (pallete.empty()) {
             ModelTriangle tri(va, vb, vc, colour);
             tri.normal = normal;
 
+            if (!texture.empty() && !baryWeightsUV.empty()) {
+                tri.texturePoints[0] = texPoint(baryWeightsUV, a);
+                tri.texturePoints[1] = texPoint(baryWeightsUV, b);
+                tri.texturePoints[2] = texPoint(baryWeightsUV, c);
+            }
+
             triangles.push_back(tri);
+            textureTriangles.push_back(texture);
         }
     }
 
@@ -98,7 +110,7 @@ if (pallete.empty()) {
         vertexNormals = findVertexNormals(triangles);
     }
 
-    return ModelData{triangles, vertexNormals};
+    return ModelData{triangles, vertexNormals, textureTriangles};
 }
 
 //TODO:: CHANGE BACK TO DEFAULT ARGUMENT
@@ -107,8 +119,8 @@ ModelData parseObj(const std::string &filename) {
 }
 
 /// Parse material files into a pallete
-std::unordered_map<std::string, Colour> parseMat(const std::string &filename){
-    std::unordered_map<std::string, Colour> pallete;
+std::unordered_map<std::string, Material> parseMat(const std::string &filename){
+    std::unordered_map<std::string, Material> pallete;
     std::string line, name;
     std::ifstream ObjFile(filename);
 
@@ -124,10 +136,16 @@ std::unordered_map<std::string, Colour> parseMat(const std::string &filename){
         if (token == "Kd") {
             float r, g, b; 
             ss >> r >> g >> b;
-            pallete[name] = Colour(
+            pallete[name].colour = Colour(
                               (int)std::round(r * 255),
                               (int)std::round(g * 255),
                               (int)std::round(b * 255));
+        }
+        if (token == "map_Kd") {
+            std::string texFile;
+            ss >> texFile;
+            texFile = texFile.substr(texFile.find_last_of("/\\") + 1);
+            pallete[name].texture = "textures/" + texFile;
         }
     }
 

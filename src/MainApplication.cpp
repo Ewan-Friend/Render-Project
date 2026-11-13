@@ -25,6 +25,10 @@ extern const std::string COR_MATERIAL = "./cornell-box.mtl";
 extern const std::string SPHERE_OBJECT = "./sphere.obj";
 extern const std::string BUNNY_OBJECT = "./models/bunny/bunny.obj";
 extern const std::string BUNNY_MATERIAL = "./models/bunny/bunny.mtl";
+extern const std::string TEX_OBJECT = "./models/t_cornell/textured-cornell-box.obj";
+extern const std::string TEX_MATERIAL = "./models/t_cornell/textured-cornell-box.mtl";
+
+extern const std::string COBBLES = "./models/t_cornell/texture.ppm";
 
 DrawingWindow window = DrawingWindow(WIDTH, HEIGHT);
 Camera camera;
@@ -46,12 +50,14 @@ float theta_step = glm::radians(5.0f);
 
 std::vector<ModelTriangle> SCENE_TRIANGLES;
 std::vector<std::array<glm::vec3, 3>> SCENE_VERTEX_NORMALS;
+std::vector<std::string> SCENE_TEXTURE_TRIANGLES;
 // PICK SCENE HERE
 // TODO: ADD ARGUMENT TO PICK SCENE (MAYBE OVERKILL NO?)
 void loadScene() {
-    const ModelData scene = sceneBuilder.cornellBunnyCage(); 
+    const ModelData scene = sceneBuilder.texturedFloor(); 
     SCENE_TRIANGLES = scene.triangles;
     SCENE_VERTEX_NORMALS = scene.vertexNormals;
+    SCENE_TEXTURE_TRIANGLES = scene.textureTriangles;
 }
 
 void handleEvent(SDL_Event event, DrawingWindow &window) {

@@ -3,13 +3,13 @@
 #include "ModelTriangle.h"
 #include "Renderer.h"
 #include "Globals.h"
-#include "ObjParser.h"
 #include "RayTriangleIntersection.h"
 #include <CanvasPoint.h>
 #include <Colour.h>
 #include <cstdint>
-#include <unordered_map>
+#include <strings.h>
 #include <vector>
+#include "TextureMap.h"
 #include "glm/detail/func_geometric.hpp"
 #include "glm/detail/type_vec.hpp"
 
@@ -113,17 +113,39 @@ glm::vec3 convertToBarycentricCoordinates(glm::vec3 v0, glm::vec3 v1, glm::vec3 
     return glm::vec3(u,v,w);
 }
 
+Colour RaytraceRenderer::getTextureColour(
+    const ModelTriangle &tri,
+    const glm::vec3 &point,
+    int index
+){
+    std::string name = textureTriangles[index];
+    TextureMap &tex = textures[name];
+    glm::vec3 barycentricWeights = convertToBarycentricCoordinates(
+        tri.vertices[0], tri.vertices[1], tri.vertices[2], point 
+    );
+    float u = barycentricWeights.x;
+    float v = barycentricWeights.y;
+    float w = barycentricWeights.z;
+
+    float tx = w * tri.texturePoints[0].x + u * tri.texturePoints[1].x + v * tri.texturePoints[2].x;
+    float ty = w * tri.texturePoints[0].y + u * tri.texturePoints[1].y + v * tri.texturePoints[2].y;
+    int x = (int)(tx * tex.width) % tex.width;
+    int y = (int)(ty * tex.height) % tex.height;
+
+    uint32_t pixel = tex.pixels[y * tex.width + x];
+    return Colour((pixel >> 16) & 0xff, (pixel >> 8) & 0xff, pixel & 0xff);
+}
+
 /// Calculates the brightness of a single point
 glm::vec3 RaytraceRenderer::calculatePointColour(
     const glm::vec3 &point, 
     const glm::vec3 &normal, 
     const ModelTriangle &tri, 
-    int triIndex) 
+    int index) 
 {
     // Diffuse lighting (now uses the passed-in vertex normal)
     float incidence = angleOfIncidence(point, normal);
-    float direct = inShadow(point, normal, triIndex) ? 0.0f : lightLevel(point);
-//    float incidence = 1.0f;
+    float direct = inShadow(point, normal, index) ? 0.0f : lightLevel(point);
     float brightness = std::max(minBrightnessThreshold, incidence * direct);
 
     // Specular lighting (fancy reflections)
@@ -131,9 +153,10 @@ glm::vec3 RaytraceRenderer::calculatePointColour(
     float pureSpecular = specularLight(point, normal, specularExponent, view);
     float specular = direct * pureSpecular;
 
-//    float specular = 0.0f;
-    // Apply the lighting
-    Colour c = tri.colour;
+    Colour c = (textureTriangles[index].empty()) 
+        ? tri.colour 
+        : getTextureColour(tri, point, index);
+
     c.red = c.red * brightness + 255.0f * specular;
     c.green = c.green * brightness + 255.0f * specular;
     c.blue = c.blue * brightness + 255.0f * specular;
@@ -144,12 +167,12 @@ glm::vec3 RaytraceRenderer::calculatePointColour(
 /// Applies Gouraud Shading to interpolate brighness from vertex normals
 glm::vec3 RaytraceRenderer::gouraudShading(
     RayTriangleIntersection intersection, 
-    glm::vec3 hitPoint,
+    glm::vec3 point,
     std::array<glm::vec3, 3> vNormals)
 {
     ModelTriangle tri = intersection.intersectedTriangle;
     glm::vec3 barycentricWeights = convertToBarycentricCoordinates(
-        tri.vertices[0], tri.vertices[1], tri.vertices[2], hitPoint
+        tri.vertices[0], tri.vertices[1], tri.vertices[2], point
     );
     float u = barycentricWeights.x;
     float v = barycentricWeights.y;
@@ -193,6 +216,12 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
     if (!loaded) {
         triangles = SCENE_TRIANGLES;
         vertexNormals = SCENE_VERTEX_NORMALS;
+        textureTriangles = SCENE_TEXTURE_TRIANGLES;
+        for (const std::string &name : textureTriangles) {
+            if (!name.empty() && !textures.count(name)) {
+                textures[name] = TextureMap(name);
+            }
+        }
         loaded = true;
     }
 

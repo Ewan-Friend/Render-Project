@@ -82,6 +82,7 @@ void Camera::update() {
     }
 }
 
+/// 
 CanvasPoint Camera::projectVertexOntoCanvasPoint(glm::vec3 vertexPosition) {
     glm::vec3 rel = glm::inverse(orientation) * (vertexPosition - position);
     float depth = -rel.z;

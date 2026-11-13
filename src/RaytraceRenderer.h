@@ -8,6 +8,8 @@
 #include "DrawingWindow.h"
 #include "Renderer.h"
 #include "ModelTriangle.h"
+#include "TextureMap.h"
+#include <unordered_map>
 #include <RayTriangleIntersection.h>
 #include "glm/detail/type_vec.hpp"
 
@@ -18,7 +20,9 @@ class RaytraceRenderer: public Renderer {
 
         std::vector<ModelTriangle> triangles;
         std::vector<std::array<glm::vec3, 3>> vertexNormals;
-        // bool loaded = false;
+        std::vector<std::string> textureTriangles;
+        std::unordered_map<std::string, TextureMap> textures;
+
         glm::vec3 lightPos = glm::vec3(0.4, 0.4, 1.9);
         enum class ShadingMethod { Flat = 0, Gouraud = 1, Phong = 2 };
         ShadingMethod shading = ShadingMethod::Flat;
@@ -37,6 +41,11 @@ class RaytraceRenderer: public Renderer {
         bool inShadow(const glm::vec3 &point, const glm::vec3 &normal, int triIndex);
         float angleOfIncidence(const glm::vec3 &point, glm::vec3 normal);
         float specularLight(const glm::vec3 &point, glm::vec3 normal, int N, glm::vec3 view);
+        Colour getTextureColour(
+            const ModelTriangle &tri,
+            const glm::vec3 &point,
+            int triIndex
+        );
         glm::vec3 calculatePointColour(
             const glm::vec3 &point, 
             const glm::vec3 &normal, 
