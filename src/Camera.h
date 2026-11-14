@@ -34,6 +34,7 @@ public:
     void reset();
     void update();
 
+    bool inFront(glm::vec3 vertexPosition);
     CanvasPoint projectVertexOntoCanvasPoint(glm::vec3 vertexPosition);
     glm::vec3 pixelToRayDir(int x, int y);
 };

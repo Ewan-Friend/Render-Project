@@ -82,7 +82,12 @@ void Camera::update() {
     }
 }
 
-/// 
+/// True if the vertex is in front of the near plane
+bool Camera::inFront(glm::vec3 vertexPosition) {
+    glm::vec3 rel = glm::inverse(orientation) * (vertexPosition - position);
+    return -rel.z > 0.1f;
+}
+
 CanvasPoint Camera::projectVertexOntoCanvasPoint(glm::vec3 vertexPosition) {
     glm::vec3 rel = glm::inverse(orientation) * (vertexPosition - position);
     float depth = -rel.z;

@@ -1,4 +1,3 @@
-#include "Colour.h"
 #include "Globals.h"
 #include "Renderer.h"
 #include "RasterisedRenderer.h"
@@ -7,7 +6,7 @@
 #include "ModelRenderer.h"
 #include "RaytraceRenderer.h"
 #include "Camera.h"
-#include "ObjParser.h"
+#include "SceneTypes.h"
 #include "glm/detail/func_trigonometric.hpp"
 #include "glm/detail/type_vec.hpp"
 #include <SDL_keycode.h>
@@ -51,13 +50,15 @@ float theta_step = glm::radians(5.0f);
 std::vector<ModelTriangle> SCENE_TRIANGLES;
 std::vector<std::array<glm::vec3, 3>> SCENE_VERTEX_NORMALS;
 std::vector<std::string> SCENE_TEXTURE_TRIANGLES;
+std::vector<Surface> SCENE_SURFACES;
 // PICK SCENE HERE
 // TODO: ADD ARGUMENT TO PICK SCENE (MAYBE OVERKILL NO?)
 void loadScene() {
-    const ModelData scene = sceneBuilder.texturedFloor(); 
+    const ModelData scene = sceneBuilder.cornellMirror(); 
     SCENE_TRIANGLES = scene.triangles;
     SCENE_VERTEX_NORMALS = scene.vertexNormals;
     SCENE_TEXTURE_TRIANGLES = scene.textureTriangles;
+    SCENE_SURFACES = scene.surfaces;
 }
 
 void handleEvent(SDL_Event event, DrawingWindow &window) {
@@ -89,8 +90,8 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
         else if (event.key.keysym.sym == SDLK_i) raytraceRenderer.lightPos.y += lightStepSize;
         else if (event.key.keysym.sym == SDLK_p) raytraceRenderer.lightPos.z -= lightStepSize;
         else if (event.key.keysym.sym == SDLK_o) raytraceRenderer.lightPos.z += lightStepSize;
-		else if (event.key.keysym.sym == SDLK_TAB) savingFrames = !savingFrames;
-		else if (event.key.keysym.sym == SDLK_RETURN) window.toggleFullscreen();
+        else if (event.key.keysym.sym == SDLK_TAB) savingFrames = !savingFrames;
+        else if (event.key.keysym.sym == SDLK_RETURN) window.toggleFullscreen();
         // Change renderers
         else if (event.key.keysym.sym == SDLK_1) currentRenderer = &raytraceRenderer;
         else if (event.key.keysym.sym == SDLK_2) currentRenderer = &modelRenderer;

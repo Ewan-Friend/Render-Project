@@ -9,6 +9,7 @@
 #include "Renderer.h"
 #include "ModelTriangle.h"
 #include "TextureMap.h"
+#include "SceneTypes.h"
 #include <unordered_map>
 #include <RayTriangleIntersection.h>
 #include "glm/detail/type_vec.hpp"
@@ -22,6 +23,7 @@ class RaytraceRenderer: public Renderer {
         std::vector<std::array<glm::vec3, 3>> vertexNormals;
         std::vector<std::string> textureTriangles;
         std::unordered_map<std::string, TextureMap> textures;
+        std::vector<Surface> surfaces;
 
         /// Base position of the light
         glm::vec3 lightPos = glm::vec3(0, 0.8, 1);

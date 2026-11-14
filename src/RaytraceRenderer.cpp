@@ -232,6 +232,7 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
         triangles = SCENE_TRIANGLES;
         vertexNormals = SCENE_VERTEX_NORMALS;
         textureTriangles = SCENE_TEXTURE_TRIANGLES;
+        surfaces = SCENE_SURFACES;
         for (const std::string &name : textureTriangles) {
             if (!name.empty() && !textures.count(name)) {
                 textures[name] = TextureMap(name);

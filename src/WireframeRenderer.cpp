@@ -1,7 +1,6 @@
 #include "WireframeRenderer.h"
 #include "DrawingWindow.h"
 #include "RasterisedRenderer.h"
-#include "ObjParser.h"
 #include "Globals.h"
 #include <CanvasPoint.h>
 #include <Colour.h>
@@ -19,6 +18,7 @@ void WireframeRenderer::draw(DrawingWindow &window) {
     //}
 
     for (ModelTriangle &tri : SCENE_TRIANGLES){
+        if (!camera.inFront(tri.vertices[0]) || !camera.inFront(tri.vertices[1]) || !camera.inFront(tri.vertices[2])) continue;
         CanvasPoint v0, v1, v2;
         v0 = camera.projectVertexOntoCanvasPoint(tri.vertices[0]);
         v1 = camera.projectVertexOntoCanvasPoint(tri.vertices[1]);
