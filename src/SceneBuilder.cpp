@@ -93,3 +93,12 @@ ModelData SceneBuilder::cornellMirror() {
         .build();
     return scene;
 }
+
+/// SCENE DESCRIPTION
+/// Ball wit the mirror on it
+ModelData SceneBuilder::mirrorBall() {
+    ModelData scene = createObject(COR_OBJECT, COR_MATERIAL)
+        .createObject(SPHERE_OBJECT, "", glm::vec3(-0.35, 0.04, -0.35), 0.8, Surface::Mirror)
+        .build();
+    return scene;
+} 

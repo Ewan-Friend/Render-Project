@@ -27,6 +27,7 @@ public:
     ModelData cornellBunnyCage();
     ModelData texturedFloor();
     ModelData cornellMirror();
+    ModelData mirrorBall();
 
     // ModelData kitchenSink();
 };

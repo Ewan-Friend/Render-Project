@@ -44,7 +44,7 @@ class RaytraceRenderer: public Renderer {
         /// How spread out the light source is (for soft shadows)
         float lightSpread = 0.15;
         /// How much light a mirror reflects
-        float reflectiveness = 0.7;
+        float reflectiveness = 1.0f;
 
         //TODO: use these for optimisation
 //        glm::vec3 lastPos;

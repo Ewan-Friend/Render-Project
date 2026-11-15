@@ -173,8 +173,6 @@ glm::vec3 RaytraceRenderer::calculatePointColour(
     const ModelTriangle &tri, 
     int index) 
 {
-    Surface currentSurface = surfaces[index];
-
     // Diffuse lighting (now uses the passed-in vertex normal)
     float incidence = angleOfIncidence(point, normal);
     float direct = (1 - ShadowStrength(point, normal, index)) * lightLevel(point);
@@ -273,25 +271,31 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
 
                 glm::vec3 normal, c;
                 std::array<glm::vec3, 3> vNormals = vertexNormals[triIndex];
-                if (surfaces[triIndex] == Surface::Mirror){
-                    c = getMirrorColour(point, tri.normal, triIndex, direction) * reflectiveness
-                    + calculatePointColour(point, tri.normal, tri, triIndex) * (1 - reflectiveness);
-                }
-                else {
-                    switch(shading) {
-                        case ShadingMethod::Flat:
-                            normal = tri.normal;
+                switch(shading) {
+                    case ShadingMethod::Flat:
+                        normal = tri.normal;
+                        if (surfaces[triIndex] == Surface::Mirror){
+                            c = getMirrorColour(point, normal, triIndex, direction) * reflectiveness
+                            + calculatePointColour(point, normal, tri, triIndex) * (1 - reflectiveness);
+                        }
+                        else {
                             c = calculatePointColour(point, normal, tri, triIndex);
-                            break;
-                        case ShadingMethod::Gouraud:
-                            normal = tri.normal;
-                            c = gouraudShading(intersection, point, vNormals);
-                            break;
-                        case ShadingMethod::Phong:
-                            normal = phongShading(intersection, point, vNormals);
+                        }
+                        break;
+                    case ShadingMethod::Gouraud:
+                        normal = tri.normal;
+                        c = gouraudShading(intersection, point, vNormals);
+                        break;
+                    case ShadingMethod::Phong:
+                        normal = phongShading(intersection, point, vNormals);
+                        if (surfaces[triIndex] == Surface::Mirror){
+                            c = getMirrorColour(point, normal, triIndex, direction) * reflectiveness
+                            + calculatePointColour(point, normal, tri, triIndex) * (1 - reflectiveness);
+                        }
+                        else {
                             c = calculatePointColour(point, normal, tri, triIndex);
-                            break;
-                    }
+                        }
+                        break;
                 }
                 uint32_t r = (uint32_t)std::min(255.0f, std::max(0.0f, c.r));
                 uint32_t g = (uint32_t)std::min(255.0f, std::max(0.0f, c.g));
