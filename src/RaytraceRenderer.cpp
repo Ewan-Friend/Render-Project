@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <strings.h>
 #include <vector>
+#include "SceneTypes.h"
 #include "TextureMap.h"
 #include "glm/detail/func_geometric.hpp"
 #include "glm/detail/type_vec.hpp"
@@ -30,9 +31,7 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 cameraPosition, glm::ve
         glm::vec3 SPVector = cameraPosition - tri.vertices[0];
         glm::mat3 DEMatrix(-rayDirection, e0, e1);
         glm::vec3 possibleSolution = glm::inverse(DEMatrix) * SPVector;
-
         float t = possibleSolution.x, u = possibleSolution.y, v = possibleSolution.z;
-
         if (t > 0.0001f && u >= 0 && v >= 0 && u + v <= 1 && t < closestIntersection.distanceFromCamera) {
             glm::vec3 point = cameraPosition + t * rayDirection;
             closestIntersection = RayTriangleIntersection(point, t, tri, i);
@@ -134,7 +133,7 @@ Colour RaytraceRenderer::getTextureColour(
     int index
 ){
     std::string name = textureTriangles[index];
-    TextureMap &tex = textures[name];
+    TextureMap &tex = textures.at(name);
     glm::vec3 barycentricWeights = convertToBarycentricCoordinates(
         tri.vertices[0], tri.vertices[1], tri.vertices[2], point 
     );
@@ -148,7 +147,23 @@ Colour RaytraceRenderer::getTextureColour(
     int y = (int)(ty * tex.height) % tex.height;
 
     uint32_t pixel = tex.pixels[y * tex.width + x];
+    // Must unpack colour
     return Colour((pixel >> 16) & 0xff, (pixel >> 8) & 0xff, pixel & 0xff);
+}
+
+glm::vec3 RaytraceRenderer::getMirrorColour(const glm::vec3 &point, glm::vec3 normal, int index, glm::vec3 view) {
+    if (glm::dot(normal, view) > 0) normal = -normal;
+    glm::vec3 reflection = view - 2.0f * normal * (glm::dot(view, normal));
+
+    RayTriangleIntersection intersection = getClosestIntersection(point + normal * 0.001f, reflection, triangles, index);
+    if (intersection.triangleIndex < 0 || intersection.distanceFromCamera >= renderDistance) {
+        return glm::vec3(0.0f);
+    }
+
+    if (intersection.distanceFromCamera == FLT_MAX) return glm::vec3(0.0f);
+    ModelTriangle tri = intersection.intersectedTriangle;
+
+    return calculatePointColour(intersection.intersectionPoint, tri.normal, tri, intersection.triangleIndex);
 }
 
 /// Calculates the brightness of a single point
@@ -158,6 +173,8 @@ glm::vec3 RaytraceRenderer::calculatePointColour(
     const ModelTriangle &tri, 
     int index) 
 {
+    Surface currentSurface = surfaces[index];
+
     // Diffuse lighting (now uses the passed-in vertex normal)
     float incidence = angleOfIncidence(point, normal);
     float direct = (1 - ShadowStrength(point, normal, index)) * lightLevel(point);
@@ -255,20 +272,26 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
                 int triIndex = intersection.triangleIndex;
 
                 glm::vec3 normal, c;
-                std::array<glm::vec3, 3> vNormals = vertexNormals[intersection.triangleIndex];
-                switch(shading) {
-                    case ShadingMethod::Flat:
-                        normal = tri.normal;
-                        c = calculatePointColour(point, normal, tri, triIndex);
-                        break;
-                    case ShadingMethod::Gouraud:
-                        normal = tri.normal;
-                        c = gouraudShading(intersection, point, vNormals);
-                        break;
-                    case ShadingMethod::Phong:
-                        normal = phongShading(intersection, point, vNormals);
-                        c = calculatePointColour(point, normal, tri, triIndex);
-                        break;
+                std::array<glm::vec3, 3> vNormals = vertexNormals[triIndex];
+                if (surfaces[triIndex] == Surface::Mirror){
+                    c = getMirrorColour(point, tri.normal, triIndex, direction) * reflectiveness
+                    + calculatePointColour(point, tri.normal, tri, triIndex) * (1 - reflectiveness);
+                }
+                else {
+                    switch(shading) {
+                        case ShadingMethod::Flat:
+                            normal = tri.normal;
+                            c = calculatePointColour(point, normal, tri, triIndex);
+                            break;
+                        case ShadingMethod::Gouraud:
+                            normal = tri.normal;
+                            c = gouraudShading(intersection, point, vNormals);
+                            break;
+                        case ShadingMethod::Phong:
+                            normal = phongShading(intersection, point, vNormals);
+                            c = calculatePointColour(point, normal, tri, triIndex);
+                            break;
+                    }
                 }
                 uint32_t r = (uint32_t)std::min(255.0f, std::max(0.0f, c.r));
                 uint32_t g = (uint32_t)std::min(255.0f, std::max(0.0f, c.g));

@@ -43,11 +43,13 @@ class RaytraceRenderer: public Renderer {
         float minBrightnessThreshold = 0.20;
         /// How spread out the light source is (for soft shadows)
         float lightSpread = 0.15;
+        /// How much light a mirror reflects
+        float reflectiveness = 0.7;
 
         //TODO: use these for optimisation
-        glm::vec3 lastPos;
-        glm::mat3 lastOri;
-        bool hasRendered = false;
+//        glm::vec3 lastPos;
+//        glm::mat3 lastOri;
+//        bool hasRendered = false;
 
         float lightLevel(const glm::vec3 &point);
         bool inShadow(const glm::vec3 &point, const glm::vec3 &normal, int triIndex, const glm::vec3 &light);
@@ -58,6 +60,12 @@ class RaytraceRenderer: public Renderer {
             const ModelTriangle &tri,
             const glm::vec3 &point,
             int triIndex
+        );
+        glm::vec3 getMirrorColour(
+            const glm::vec3 &point, 
+            glm::vec3 normal, 
+            int index, 
+            glm::vec3 view
         );
         glm::vec3 calculatePointColour(
             const glm::vec3 &point, 

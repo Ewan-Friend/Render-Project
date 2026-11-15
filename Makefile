@@ -19,7 +19,7 @@ SDW_OBJECT_FILES := $(patsubst $(SDW_DIR)%.cpp, $(BUILD_DIR)SDW/%.o, $(SDW_SOURC
 
 # Build options
 COMPILER := clang++
-COMPILER_OPTIONS := -c -pipe -Wall -O2 -fopenmp -std=c++11 # If you have an older compiler, you might have to use -std=c++0x
+COMPILER_OPTIONS := -c -pipe -Wall -O2 -fopenmp -std=c++11 -MMD -MP# If you have an older compiler, you might have to use -std=c++0x
 DEBUG_OPTIONS := -ggdb -g3
 FUSSY_OPTIONS := -Werror -pedantic
 SANITIZER_OPTIONS := -O1 -fsanitize=undefined -fsanitize=address -fno-omit-frame-pointer
@@ -88,4 +88,3 @@ clean:
 deps:
 	@if command -v pacman >/dev/null 2>&1; then sudo pacman -S --needed --noconfirm openmp sdl2 clang; \
 	elif command -v apt >/dev/null 2>&1; then sudo apt install -y libomp-dev libsdl2-dev clang; \
-	else echo "Unknown package manager: install libomp and SDL2 manually"; fielse echo "Unknown package manager: install libomp and SDL2 manually"; fi

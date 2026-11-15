@@ -39,14 +39,14 @@ SceneBuilder& SceneBuilder::createObject(
 /// Apply a surface type to the face of a model by specifying triangle indexes 
 SceneBuilder& SceneBuilder::surfaceFace(Surface surface, std::vector<int> triIndexes){
     for (int i: triIndexes){
-        surfaces[i] = surface;
+        surfaces.at(i) = surface;
     }
     return *this;
 }
 
 /// Return model data from the scene
 ModelData SceneBuilder::build() const {
-    return {triangles, vertexNormals, textureTriangles};
+    return {triangles, vertexNormals, textureTriangles, surfaces};
 }
 
 /// SCENE DESCRIPTION:
@@ -86,7 +86,7 @@ ModelData SceneBuilder::texturedFloor() {
 
 /// SCENE DESCRIPTION
 /// A cornell box where one of the faces is a mirror
-std::vector<int> faces(2, 3);
+std::vector<int> faces = {26, 31};
 ModelData SceneBuilder::cornellMirror() {
     ModelData scene = createObject(COR_OBJECT, COR_MATERIAL)
         .surfaceFace(Surface::Mirror, faces)
