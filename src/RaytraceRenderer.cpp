@@ -8,6 +8,7 @@
 #include <Colour.h>
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <string>
 #include <strings.h>
 #include <vector>
@@ -71,6 +72,7 @@ bool RaytraceRenderer::inShadow(const glm::vec3 &point, const glm::vec3 &normal,
 
 /// Averages the how many "shadow rays"" hit the lights 
 /// TODO:: ADD TOGGLE FOR SOFT SHADOWS
+/// TODO:: GENERATE LIGHT POINTS INTO A SPHERE
 float RaytraceRenderer::ShadowStrength(const glm::vec3 point, const glm::vec3 &normal, int triIndex){
     int totalChecked = 0;
     int totalBlocked = 0;
@@ -150,14 +152,14 @@ glm::vec3 RaytraceRenderer::getCubemapColour(glm::vec3 dir){
         v = dir.y;
         face = positive ? 0 : 1;
     }
-    if (Y >= X && Y >= Z){
+    else if (Y >= X && Y >= Z){
         bigAxis = Y;
         bool positive = dir.y > 0;
         u = dir.x;
         v = positive ? -dir.z : dir.z;
         face = positive ? 2 : 3;
     }
-    if (Z >= X && Z >= Y){
+    else if (Z >= X && Z >= Y){
         bigAxis = Z;
         bool positive = dir.z > 0;
         u = positive ? dir.x : -dir.x;
@@ -200,20 +202,39 @@ Colour RaytraceRenderer::getTextureColour(
     return Colour((p >> 16) & 0xff, (p >> 8) & 0xff, p & 0xff);
 }
 
+/// Generate random unit vector
+glm::vec3 randomUnitVector(){
+    int x, y, z;
+    while (true) {
+        glm::vec3 p(
+            2.0f * std::rand() / RAND_MAX - 1.0f,
+            2.0f * std::rand() / RAND_MAX - 1.0f,
+            2.0f * std::rand() / RAND_MAX - 1.0f
+        );
+        if (glm::dot(p, p) > 0 && glm::dot(p, p) < 1){
+            return glm::normalize(p);
+        }
+    }
+}
 //TODO: PHONG SHADING ENABLER
 //TODO: ADD TOGGLE FOR MIRRORS
 /// colour is a reflection from the objects faces, can bounce multiple times
-glm::vec3 RaytraceRenderer::getMirrorColour(
+glm::vec3 RaytraceRenderer::getReflectColour(
     const glm::vec3 &point, 
     glm::vec3 normal, 
     int index, 
     glm::vec3 view, 
-    int bouncesLeft) 
+    int bouncesLeft,
+    float fuzz
+) 
 {
     if (bouncesLeft <= 0) return getCubemapColour(view);
-
     if (glm::dot(normal, view) > 0) normal = -normal;
-    glm::vec3 reflection = view - 2.0f * normal * (glm::dot(view, normal));
+
+    glm::vec3 mirrorReflection = view - 2.0f * normal * (glm::dot(view, normal));
+    
+    glm::vec3 randomReflection = (fuzz > 1.0f) ? randomUnitVector() : glm::vec3(0.0f);
+    glm::vec3 reflection =(mirrorReflection + fuzz * randomReflection);
 
     RayTriangleIntersection intersection = getClosestIntersection(point + normal * 0.001f, reflection, triangles, index);
     if (intersection.triangleIndex < 0 || intersection.distanceFromCamera >= renderDistance) {
@@ -221,13 +242,12 @@ glm::vec3 RaytraceRenderer::getMirrorColour(
     }
     
     ModelTriangle tri = intersection.intersectedTriangle;
-
-    if (surfaces.at(intersection.triangleIndex) == Surface::Mirror) {
-        return getMirrorColour(
-            intersection.intersectionPoint, tri.normal, intersection.triangleIndex, reflection, bouncesLeft - 1
+    Surface intersectionSurface = surfaces.at(intersection.triangleIndex);
+    if (intersectionSurface == Surface::Mirror || intersectionSurface == Surface::Metal) {
+        return getReflectColour(
+            intersection.intersectionPoint, tri.normal, intersection.triangleIndex, reflection, bouncesLeft - 1, fuzz
         );
     }
-
 
     return calculatePointColour(intersection.intersectionPoint, tri.normal, tri, intersection.triangleIndex);
 }
@@ -236,7 +256,7 @@ glm::vec3 RaytraceRenderer::getMirrorColour(
 glm::vec3 RaytraceRenderer::calculatePointColour(
     const glm::vec3 &point, 
     const glm::vec3 &normal, 
-    const ModelTriangle &tri, 
+    const ModelTriangle &tri,
     int index) 
 {
     // Diffuse lighting (now uses the passed-in vertex normal)
@@ -351,7 +371,7 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
                                 c = calculatePointColour(point, normal, tri, triIndex);
                                 break;
                             case Surface::Mirror:
-                                c = getMirrorColour(point, normal, triIndex, direction, maxBounces) * reflectiveness
+                                c = getReflectColour(point, normal, triIndex, direction, maxBounces) * reflectiveness
                                 + calculatePointColour(point, normal, tri, triIndex) * (1 - reflectiveness);
                                 break;
                             case Surface::Metal:
@@ -365,7 +385,7 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
                                 c = gouraudShading(intersection, point, vNormals);
                                 break;
                             case Surface::Mirror:
-                                c = getMirrorColour(point, normal, triIndex, direction, maxBounces) * reflectiveness
+                                c = getReflectColour(point, normal, triIndex, direction, maxBounces) * reflectiveness
                                 + gouraudShading(intersection, point, vNormals) * (1 - reflectiveness);
                                 break;
                             case Surface::Metal:
@@ -379,11 +399,11 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
                                 c = calculatePointColour(point, normal, tri, triIndex);
                                 break;
                             case Surface::Mirror:
-                                c = getMirrorColour(point, normal, triIndex, direction, maxBounces) * reflectiveness
+                                c = getReflectColour(point, normal, triIndex, direction, maxBounces) * reflectiveness
                                 + calculatePointColour(point, normal, tri, triIndex) * (1 - reflectiveness);
                                 break;
                             case Surface::Metal:
-                                break;
+                                c = getReflectColour(point, normal, triIndex, direction, maxBounces, metalFuzz);
                         }
                         break;
                 }

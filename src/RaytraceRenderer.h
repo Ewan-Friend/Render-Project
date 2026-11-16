@@ -48,6 +48,8 @@ class RaytraceRenderer: public Renderer {
         float reflectiveness = 0.7f;
         /// How many times multiple mirrors can reflect light
         int maxBounces = 3;
+        /// "Fuzziness" of metal
+        float metalFuzz = 0.8;
 
         //TODO: use these for optimisation
 //        glm::vec3 lastPos;
@@ -65,12 +67,13 @@ class RaytraceRenderer: public Renderer {
             const glm::vec3 &point,
             int triIndex
         );
-        glm::vec3 getMirrorColour(
+        glm::vec3 getReflectColour(
             const glm::vec3 &point, 
             glm::vec3 normal, 
             int index, 
             glm::vec3 view,
-            int bouncesLeft
+            int bouncesLeft,
+            float fuzz = 0
         );
         glm::vec3 calculatePointColour(
             const glm::vec3 &point, 
