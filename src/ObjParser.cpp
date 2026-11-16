@@ -34,7 +34,7 @@ ModelData parseObj(const std::string &filename, const std::unordered_map<std::st
 
     std::string line;
     std::vector<glm::vec3> vertices;
-    Colour colour(240, 120, 40);
+    Colour colour(80, 80, 169);
     std::string texture = "";
 
     std::ifstream ObjFile(filename);

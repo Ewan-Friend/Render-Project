@@ -346,26 +346,44 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
                 switch(shading) {
                     case ShadingMethod::Flat:
                         normal = tri.normal;
-                        if (surfaces[triIndex] == Surface::Mirror){
-                            c = getMirrorColour(point, normal, triIndex, direction, maxBounces) * reflectiveness
-                            + calculatePointColour(point, normal, tri, triIndex) * (1 - reflectiveness);
-                        }
-                        else {
-                            c = calculatePointColour(point, normal, tri, triIndex);
+                        switch(surfaces[triIndex]){
+                            case Surface::Base:
+                                c = calculatePointColour(point, normal, tri, triIndex);
+                                break;
+                            case Surface::Mirror:
+                                c = getMirrorColour(point, normal, triIndex, direction, maxBounces) * reflectiveness
+                                + calculatePointColour(point, normal, tri, triIndex) * (1 - reflectiveness);
+                                break;
+                            case Surface::Metal:
+                                break;
                         }
                         break;
                     case ShadingMethod::Gouraud:
                         normal = tri.normal;
-                        c = gouraudShading(intersection, point, vNormals);
+                        switch(surfaces[triIndex]){
+                            case Surface::Base:
+                                c = gouraudShading(intersection, point, vNormals);
+                                break;
+                            case Surface::Mirror:
+                                c = getMirrorColour(point, normal, triIndex, direction, maxBounces) * reflectiveness
+                                + gouraudShading(intersection, point, vNormals) * (1 - reflectiveness);
+                                break;
+                            case Surface::Metal:
+                                break;
+                        }
                         break;
                     case ShadingMethod::Phong:
                         normal = phongShading(intersection, point, vNormals);
-                        if (surfaces[triIndex] == Surface::Mirror){
-                            c = getMirrorColour(point, normal, triIndex, direction, maxBounces) * reflectiveness
-                            + calculatePointColour(point, normal, tri, triIndex) * (1 - reflectiveness);
-                        }
-                        else {
-                            c = calculatePointColour(point, normal, tri, triIndex);
+                        switch(surfaces[triIndex]){
+                            case Surface::Base:
+                                c = calculatePointColour(point, normal, tri, triIndex);
+                                break;
+                            case Surface::Mirror:
+                                c = getMirrorColour(point, normal, triIndex, direction, maxBounces) * reflectiveness
+                                + calculatePointColour(point, normal, tri, triIndex) * (1 - reflectiveness);
+                                break;
+                            case Surface::Metal:
+                                break;
                         }
                         break;
                 }

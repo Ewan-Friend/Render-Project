@@ -5,8 +5,10 @@
 #include "Colour.h"
 #include "ModelTriangle.h"
 
-enum class Surface { Base = 0, Mirror = 1 };
+/// Holds data for whats reflected from a face
+enum class Surface { Base = 0, Mirror = 1, Metal = 2 };
 
+/// Holds basic data about the model
 struct ModelData {
     std::vector<ModelTriangle> triangles;
     std::vector<std::array<glm::vec3, 3>> vertexNormals;
@@ -14,6 +16,7 @@ struct ModelData {
     std::vector<Surface> surfaces;
 };
 
+/// Holds data for whats drawn onto a face
 struct Material {
     Colour colour;
     std::string texture;
