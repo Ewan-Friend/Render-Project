@@ -6,6 +6,7 @@
 #include "RayTriangleIntersection.h"
 #include <CanvasPoint.h>
 #include <Colour.h>
+#include <cmath>
 #include <cstdint>
 #include <strings.h>
 #include <vector>
@@ -16,7 +17,8 @@
 
 constexpr double PI = 3.14159265;
 
-// Gets information about the closest intersection when firing a ray
+
+/// Gets information about the closest intersection when firing a ray
 RayTriangleIntersection getClosestIntersection(glm::vec3 cameraPosition, glm::vec3 rayDirection,
                                             const std::vector<ModelTriangle> &tris,
                                             int ignoreIndex){
@@ -41,7 +43,7 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 cameraPosition, glm::ve
     return closestIntersection;
 }
 
-/// Check if the point is in shadow 
+/// Check if the point is in shadow
 bool RaytraceRenderer::inShadow(const glm::vec3 &point, const glm::vec3 &normal, int triIndex, const glm::vec3 &light) {
     float offsetDistance = 0.001f;
 
@@ -67,6 +69,7 @@ bool RaytraceRenderer::inShadow(const glm::vec3 &point, const glm::vec3 &normal,
 };
 
 /// Averages the how many "shadow rays"" hit the lights 
+/// TODO:: ADD TOGGLE FOR SOFT SHADOWS
 float RaytraceRenderer::ShadowStrength(const glm::vec3 point, const glm::vec3 &normal, int triIndex){
     int totalChecked = 0;
     int totalBlocked = 0;
@@ -127,6 +130,25 @@ glm::vec3 convertToBarycentricCoordinates(glm::vec3 v0, glm::vec3 v1, glm::vec3 
     return glm::vec3(u,v,w);
 }
 
+/// Converts a direction vector to cubemap pixel 
+/// concepts from https://en.wikipedia.org/wiki/Cube_mapping#Memory_addressing
+Colour RaytraceRenderer::getCubemapColour(glm::vec3 dir){
+    float X = std::fabs(dir.x);
+    float Y = std::fabs(dir.y);
+    float Z = std::fabs(dir.z);
+
+    float bigAxis, u, v; 
+    // const TextureMap &faceTexture = TextureMap();
+
+    if (X >= Y && X >= Z){
+        bigAxis = X;
+        bool positive = dir.x > 0;
+        u = positive ? -dir.z : dir.z;
+        v = dir.y;
+        const TextureMap &faceTexture = positive ? cubemapFaces.at(0) : cubemapFaces.at(1);
+    }
+}
+
 Colour RaytraceRenderer::getTextureColour(
     const ModelTriangle &tri,
     const glm::vec3 &point,
@@ -151,6 +173,8 @@ Colour RaytraceRenderer::getTextureColour(
     return Colour((pixel >> 16) & 0xff, (pixel >> 8) & 0xff, pixel & 0xff);
 }
 
+//TODO: BOUNCE ACROSS MULTIPLE MIRRORS
+//TODO: ADD TOGGLE FOR MIRRORS?
 glm::vec3 RaytraceRenderer::getMirrorColour(const glm::vec3 &point, glm::vec3 normal, int index, glm::vec3 view) {
     if (glm::dot(normal, view) > 0) normal = -normal;
     glm::vec3 reflection = view - 2.0f * normal * (glm::dot(view, normal));
@@ -239,7 +263,7 @@ glm::vec3 RaytraceRenderer::phongShading(
     );
 }
 
-
+// TODO: GET SHADER ENABLER TO SEE IF AN OBJECT SHOULD BE SHADED
 void RaytraceRenderer::draw(DrawingWindow &window) {
     // camera.update();
     window.clearPixels();

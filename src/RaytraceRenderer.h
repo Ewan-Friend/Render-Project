@@ -24,6 +24,7 @@ class RaytraceRenderer: public Renderer {
         std::vector<std::string> textureTriangles;
         std::unordered_map<std::string, TextureMap> textures;
         std::vector<Surface> surfaces;
+        std::vector<TextureMap> cubemapFaces;
 
         /// Base position of the light
         glm::vec3 lightPos = glm::vec3(0, 0.8, 1);
@@ -56,6 +57,7 @@ class RaytraceRenderer: public Renderer {
         float ShadowStrength(const glm::vec3 point, const glm::vec3 &normal, int triIndex);
         float angleOfIncidence(const glm::vec3 &point, glm::vec3 normal);
         float specularLight(const glm::vec3 &point, glm::vec3 normal, int N, glm::vec3 view);
+        Colour getCubemapColour(glm::vec3 dir);
         Colour getTextureColour(
             const ModelTriangle &tri,
             const glm::vec3 &point,
