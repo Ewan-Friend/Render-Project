@@ -28,6 +28,7 @@ public:
     ModelData texturedFloor();
     ModelData cornellMirror();
     ModelData mirrorBall();
+    ModelData cornellMirrorBall();
 
     // ModelData kitchenSink();
 };

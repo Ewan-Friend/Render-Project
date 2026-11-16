@@ -46,6 +46,8 @@ class RaytraceRenderer: public Renderer {
         float lightSpread = 0.15;
         /// How much light a mirror reflects
         float reflectiveness = 1.0f;
+        /// How many times multiple mirrors can reflect light
+        int maxBounces = 3;
 
         //TODO: use these for optimisation
 //        glm::vec3 lastPos;
@@ -57,7 +59,7 @@ class RaytraceRenderer: public Renderer {
         float ShadowStrength(const glm::vec3 point, const glm::vec3 &normal, int triIndex);
         float angleOfIncidence(const glm::vec3 &point, glm::vec3 normal);
         float specularLight(const glm::vec3 &point, glm::vec3 normal, int N, glm::vec3 view);
-        Colour getCubemapColour(glm::vec3 dir);
+        glm::vec3 getCubemapColour(glm::vec3 dir);
         Colour getTextureColour(
             const ModelTriangle &tri,
             const glm::vec3 &point,
@@ -67,7 +69,8 @@ class RaytraceRenderer: public Renderer {
             const glm::vec3 &point, 
             glm::vec3 normal, 
             int index, 
-            glm::vec3 view
+            glm::vec3 view,
+            int bouncesLeft
         );
         glm::vec3 calculatePointColour(
             const glm::vec3 &point, 

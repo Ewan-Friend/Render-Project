@@ -39,7 +39,8 @@ glm::mat3 Camera::rotY(float t) {
 
 /// Move the camera
 void Camera::translate(const glm::vec3 &delta) { 
-    position += delta;
+    // position += delta; //  for global movement!
+    position += orientation * delta;
     snapLook();
 }
 

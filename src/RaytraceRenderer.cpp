@@ -8,6 +8,7 @@
 #include <Colour.h>
 #include <cmath>
 #include <cstdint>
+#include <string>
 #include <strings.h>
 #include <vector>
 #include "SceneTypes.h"
@@ -130,25 +131,51 @@ glm::vec3 convertToBarycentricCoordinates(glm::vec3 v0, glm::vec3 v1, glm::vec3 
     return glm::vec3(u,v,w);
 }
 
+//TODO: ADD GLOBAL FLAG TO TOGGLE ENVIRONMENT MAPS ON / OFF (return glm::vec3(0))
 /// Converts a direction vector to cubemap pixel 
-/// concepts from https://en.wikipedia.org/wiki/Cube_mapping#Memory_addressing
-Colour RaytraceRenderer::getCubemapColour(glm::vec3 dir){
+/// Concepts from https://en.wikipedia.org/wiki/Cube_mapping#Memory_addressing
+glm::vec3 RaytraceRenderer::getCubemapColour(glm::vec3 dir){
     float X = std::fabs(dir.x);
     float Y = std::fabs(dir.y);
     float Z = std::fabs(dir.z);
 
     float bigAxis, u, v; 
-    // const TextureMap &faceTexture = TextureMap();
+    int face;
 
+    // Check which face a specific vector is facing, as well as local u,v coordinates on said face
     if (X >= Y && X >= Z){
         bigAxis = X;
         bool positive = dir.x > 0;
         u = positive ? -dir.z : dir.z;
         v = dir.y;
-        const TextureMap &faceTexture = positive ? cubemapFaces.at(0) : cubemapFaces.at(1);
+        face = positive ? 0 : 1;
     }
+    if (Y >= X && Y >= Z){
+        bigAxis = Y;
+        bool positive = dir.y > 0;
+        u = dir.x;
+        v = positive ? -dir.z : dir.z;
+        face = positive ? 2 : 3;
+    }
+    if (Z >= X && Z >= Y){
+        bigAxis = Z;
+        bool positive = dir.z > 0;
+        u = positive ? dir.x : -dir.x;
+        v = dir.y;
+        face = positive ? 4 : 5;
+    }
+    // Apply face and face coordinates and gets a colour from it
+    const TextureMap &faceTexture = cubemapFaces.at(face);
+    float fx = (u / bigAxis + 1) / 2  * faceTexture.width;
+    float fy = (1 - (v / bigAxis + 1) / 2) * faceTexture.height;
+    int x = std::min(std::max((int)fx, 0), (int)faceTexture.width  - 1);
+    int y = std::min(std::max((int)fy, 0), (int)faceTexture.height - 1);
+
+    uint32_t p = faceTexture.pixels[y * faceTexture.width + x];
+    return glm::vec3((p >> 16) & 0xff, (p >> 8) & 0xff, p & 0xff);
 }
 
+/// Finds the texture position to convert to a colour
 Colour RaytraceRenderer::getTextureColour(
     const ModelTriangle &tri,
     const glm::vec3 &point,
@@ -168,24 +195,39 @@ Colour RaytraceRenderer::getTextureColour(
     int x = (int)(tx * tex.width) % tex.width;
     int y = (int)(ty * tex.height) % tex.height;
 
-    uint32_t pixel = tex.pixels[y * tex.width + x];
+    uint32_t p = tex.pixels[y * tex.width + x];
     // Must unpack colour
-    return Colour((pixel >> 16) & 0xff, (pixel >> 8) & 0xff, pixel & 0xff);
+    return Colour((p >> 16) & 0xff, (p >> 8) & 0xff, p & 0xff);
 }
 
-//TODO: BOUNCE ACROSS MULTIPLE MIRRORS
-//TODO: ADD TOGGLE FOR MIRRORS?
-glm::vec3 RaytraceRenderer::getMirrorColour(const glm::vec3 &point, glm::vec3 normal, int index, glm::vec3 view) {
+//TODO: PHONG SHADING ENABLER
+//TODO: ADD TOGGLE FOR MIRRORS
+/// colour is a reflection from the objects faces, can bounce multiple times
+glm::vec3 RaytraceRenderer::getMirrorColour(
+    const glm::vec3 &point, 
+    glm::vec3 normal, 
+    int index, 
+    glm::vec3 view, 
+    int bouncesLeft) 
+{
+    if (bouncesLeft <= 0) return getCubemapColour(view);
+
     if (glm::dot(normal, view) > 0) normal = -normal;
     glm::vec3 reflection = view - 2.0f * normal * (glm::dot(view, normal));
 
     RayTriangleIntersection intersection = getClosestIntersection(point + normal * 0.001f, reflection, triangles, index);
     if (intersection.triangleIndex < 0 || intersection.distanceFromCamera >= renderDistance) {
-        return glm::vec3(0.0f);
+        return getCubemapColour(reflection);
+    }
+    
+    ModelTriangle tri = intersection.intersectedTriangle;
+
+    if (surfaces.at(intersection.triangleIndex) == Surface::Mirror) {
+        return getMirrorColour(
+            intersection.intersectionPoint, tri.normal, intersection.triangleIndex, reflection, bouncesLeft - 1
+        );
     }
 
-    if (intersection.distanceFromCamera == FLT_MAX) return glm::vec3(0.0f);
-    ModelTriangle tri = intersection.intersectedTriangle;
 
     return calculatePointColour(intersection.intersectionPoint, tri.normal, tri, intersection.triangleIndex);
 }
@@ -277,6 +319,11 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
                 textures[name] = TextureMap(name);
             }
         }
+        std::string pathPrefix = "textures/skybox/";
+        std::vector<std::string> facePaths = {"posx.ppm", "negx.ppm", "posy.ppm", "negy.ppm", "posz.ppm", "negz.ppm"};
+        for (int i = 0; i < 6; i++){
+            cubemapFaces.push_back(TextureMap(pathPrefix + facePaths.at(i)));
+        }
         loaded = true;
     }
 
@@ -284,6 +331,7 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
     for (int x = 0; x < WIDTH; x++){
         for (int y = 0; y < HEIGHT; y++){
             glm::vec3 direction = camera.pixelToRayDir(x, y); 
+            glm::vec3 c;
             RayTriangleIntersection intersection = getClosestIntersection( 
                 camera.position, direction, SCENE_TRIANGLES, -1
             ); 
@@ -293,13 +341,13 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
                 ModelTriangle tri = intersection.intersectedTriangle;
                 int triIndex = intersection.triangleIndex;
 
-                glm::vec3 normal, c;
+                glm::vec3 normal;
                 std::array<glm::vec3, 3> vNormals = vertexNormals[triIndex];
                 switch(shading) {
                     case ShadingMethod::Flat:
                         normal = tri.normal;
                         if (surfaces[triIndex] == Surface::Mirror){
-                            c = getMirrorColour(point, normal, triIndex, direction) * reflectiveness
+                            c = getMirrorColour(point, normal, triIndex, direction, maxBounces) * reflectiveness
                             + calculatePointColour(point, normal, tri, triIndex) * (1 - reflectiveness);
                         }
                         else {
@@ -313,7 +361,7 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
                     case ShadingMethod::Phong:
                         normal = phongShading(intersection, point, vNormals);
                         if (surfaces[triIndex] == Surface::Mirror){
-                            c = getMirrorColour(point, normal, triIndex, direction) * reflectiveness
+                            c = getMirrorColour(point, normal, triIndex, direction, maxBounces) * reflectiveness
                             + calculatePointColour(point, normal, tri, triIndex) * (1 - reflectiveness);
                         }
                         else {
@@ -321,14 +369,16 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
                         }
                         break;
                 }
-                uint32_t r = (uint32_t)std::min(255.0f, std::max(0.0f, c.r));
-                uint32_t g = (uint32_t)std::min(255.0f, std::max(0.0f, c.g));
-                uint32_t b = (uint32_t)std::min(255.0f, std::max(0.0f, c.b));
-
-                uint32_t colour = (255 << 24) + (r << 16) + (g << 8) + b;
-
-                window.setPixelColour(x, y, colour);
             }
+            else {
+                c = getCubemapColour(direction);
+            }
+            uint32_t r = (uint32_t)std::min(255.0f, std::max(0.0f, c.r));
+            uint32_t g = (uint32_t)std::min(255.0f, std::max(0.0f, c.g));
+            uint32_t b = (uint32_t)std::min(255.0f, std::max(0.0f, c.b));
+
+            uint32_t colour = (255 << 24) + (r << 16) + (g << 8) + b;
+            window.setPixelColour(x, y, colour);
         }
     }
 }
