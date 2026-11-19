@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <string>
 #include <strings.h>
+#include <sys/types.h>
 #include <vector>
 #include "SceneTypes.h"
 #include "TextureMap.h"
@@ -203,19 +204,20 @@ Colour RaytraceRenderer::getTextureColour(
 }
 
 /// Generate random unit vector
-glm::vec3 randomUnitVector(){
+glm::vec3 randomUnitVector(uint32_t &seed){
     int x, y, z;
     while (true) {
         glm::vec3 p(
-            2.0f * std::rand() / RAND_MAX - 1.0f,
-            2.0f * std::rand() / RAND_MAX - 1.0f,
-            2.0f * std::rand() / RAND_MAX - 1.0f
+            2.0f * rand_r(&seed) / RAND_MAX - 1.0f, 
+            2.0f * rand_r(&seed) / RAND_MAX - 1.0f, 
+            2.0f * rand_r(&seed) / RAND_MAX - 1.0f
         );
         if (glm::dot(p, p) > 0 && glm::dot(p, p) < 1){
             return glm::normalize(p);
         }
     }
 }
+
 //TODO: PHONG SHADING ENABLER
 //TODO: ADD TOGGLE FOR MIRRORS
 /// colour is a reflection from the objects faces, can bounce multiple times
@@ -224,32 +226,65 @@ glm::vec3 RaytraceRenderer::getReflectColour(
     glm::vec3 normal, 
     int index, 
     glm::vec3 view, 
-    int bouncesLeft,
-    float fuzz
+    int bouncesLeft, 
+    float fuzz, 
+    glm::vec3 albedo, 
+    uint32_t seed
 ) 
 {
     if (bouncesLeft <= 0) return getCubemapColour(view);
     if (glm::dot(normal, view) > 0) normal = -normal;
 
-    glm::vec3 mirrorReflection = view - 2.0f * normal * (glm::dot(view, normal));
-    
-    glm::vec3 randomReflection = (fuzz > 1.0f) ? randomUnitVector() : glm::vec3(0.0f);
-    glm::vec3 reflection =(mirrorReflection + fuzz * randomReflection);
+    glm::vec3 mirrorReflection = glm::normalize(view - 2.0f * normal * (glm::dot(view, normal)));
+    int samples = (fuzz > 0.0f) ? fuzzSamples : 1;
+    glm::vec3 totalColour(0.0f);
 
-    RayTriangleIntersection intersection = getClosestIntersection(point + normal * 0.001f, reflection, triangles, index);
-    if (intersection.triangleIndex < 0 || intersection.distanceFromCamera >= renderDistance) {
-        return getCubemapColour(reflection);
-    }
-    
-    ModelTriangle tri = intersection.intersectedTriangle;
-    Surface intersectionSurface = surfaces.at(intersection.triangleIndex);
-    if (intersectionSurface == Surface::Mirror || intersectionSurface == Surface::Metal) {
-        return getReflectColour(
-            intersection.intersectionPoint, tri.normal, intersection.triangleIndex, reflection, bouncesLeft - 1, fuzz
-        );
-    }
+    for (int i = 0; i < samples; i++){
+        glm::vec3 currentReflection = mirrorReflection;
+        if (fuzz > 0){
+//            float freq = 45.0f;
+//            glm::vec3 perturb(
+//                std::sin(point.y * freq + point.z * freq),
+//                std::sin(point.z * freq + point.x * freq),
+//                std::sin(point.x * freq + point.y * freq)
+//            );
+            // TODO: BETTER SAMPLING METHOD
+            glm::vec3 perturb = randomUnitVector(seed);
+            currentReflection = mirrorReflection + fuzz * perturb;
+            if (dot(currentReflection, normal) <= 0){
+                continue;
+            }
+        }
+        RayTriangleIntersection intersection = getClosestIntersection(point + normal * 0.001f, currentReflection, triangles, index);
 
-    return calculatePointColour(intersection.intersectionPoint, tri.normal, tri, intersection.triangleIndex);
+        if (intersection.triangleIndex < 0 || intersection.distanceFromCamera >= renderDistance) {
+            totalColour += albedo * getCubemapColour(currentReflection);
+            continue;
+        }
+
+        ModelTriangle tri = intersection.intersectedTriangle;
+        Surface nextSurface = surfaces.at(intersection.triangleIndex);
+        if (nextSurface == Surface::Mirror) {
+            totalColour += getReflectColour(
+                intersection.intersectionPoint, tri.normal, intersection.triangleIndex,
+                currentReflection, bouncesLeft - 1, 0.0f, glm::vec3(1.0f)
+            );
+        } else if (nextSurface == Surface::Metal) {
+            glm::vec3 hitMetalAlbedo = glm::vec3(tri.colour.red, tri.colour.green, tri.colour.blue) / 255.0f;
+            totalColour += getReflectColour(
+                intersection.intersectionPoint, tri.normal, intersection.triangleIndex,
+                currentReflection, bouncesLeft - 1, metalFuzz, hitMetalAlbedo
+            );
+        } else {
+            totalColour += albedo * calculatePointColour(
+                intersection.intersectionPoint, 
+                tri.normal, 
+                tri, 
+                intersection.triangleIndex
+            );
+        }
+    }
+    return totalColour / (float)samples;
 }
 
 /// Calculates the brightness of a single point
@@ -352,6 +387,8 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
         for (int y = 0; y < HEIGHT; y++){
             glm::vec3 direction = camera.pixelToRayDir(x, y); 
             glm::vec3 c;
+            // Creates a new seed based on the pixel location (avoid flickering / patterns)
+            uint32_t seed = (y * 10101) ^ (x * 80085) ^ 1234u;
             RayTriangleIntersection intersection = getClosestIntersection( 
                 camera.position, direction, SCENE_TRIANGLES, -1
             ); 
@@ -370,12 +407,17 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
                             case Surface::Base:
                                 c = calculatePointColour(point, normal, tri, triIndex);
                                 break;
+                            //TODO: MAKE COLOURS CARRY ACROSS REFLECTION INSTEAD OF CHEATING
                             case Surface::Mirror:
-                                c = getReflectColour(point, normal, triIndex, direction, maxBounces) * reflectiveness
-                                + calculatePointColour(point, normal, tri, triIndex) * (1 - reflectiveness);
+                                c = getReflectColour(point, normal, triIndex, direction, maxBounces);
+//                                * reflectiveness
+//                                + calculatePointColour(point, normal, tri, triIndex) * (1 - reflectiveness);
                                 break;
                             case Surface::Metal:
-                                break;
+                            c = getReflectColour(
+                                point, normal, triIndex, direction, maxBounces, metalFuzz, glm::vec3(1.0f, 0.85f, 0.57f), seed
+                            );
+                            break;
                         }
                         break;
                     case ShadingMethod::Gouraud:
@@ -385,8 +427,9 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
                                 c = gouraudShading(intersection, point, vNormals);
                                 break;
                             case Surface::Mirror:
-                                c = getReflectColour(point, normal, triIndex, direction, maxBounces) * reflectiveness
-                                + gouraudShading(intersection, point, vNormals) * (1 - reflectiveness);
+                                c = getReflectColour(point, normal, triIndex, direction, maxBounces);
+//                                * reflectiveness
+//                                + gouraudShading(intersection, point, vNormals) * (1 - reflectiveness);
                                 break;
                             case Surface::Metal:
                                 break;
@@ -403,7 +446,9 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
                                 + calculatePointColour(point, normal, tri, triIndex) * (1 - reflectiveness);
                                 break;
                             case Surface::Metal:
-                                c = getReflectColour(point, normal, triIndex, direction, maxBounces, metalFuzz);
+                                c = getReflectColour(
+                                    point, normal, triIndex, direction, maxBounces, metalFuzz, glm::vec3(1.0f, 0.85f, 0.57f), seed
+                                );
                         }
                         break;
                 }

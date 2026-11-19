@@ -54,7 +54,7 @@ std::vector<Surface> SCENE_SURFACES;
 // PICK SCENE HERE
 // TODO: ADD ARGUMENT TO PICK SCENE (MAYBE OVERKILL NO?)
 void loadScene() {
-    const ModelData scene = sceneBuilder.mirrorBall(); 
+    const ModelData scene = sceneBuilder.cornellMirrorBall(); 
     SCENE_TRIANGLES = scene.triangles;
     SCENE_VERTEX_NORMALS = scene.vertexNormals;
     SCENE_TEXTURE_TRIANGLES = scene.textureTriangles;

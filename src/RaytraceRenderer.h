@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cfloat>
+#include <sys/types.h>
 #include <vector>
 #include <glm/glm.hpp>
 #include "Camera.h"
@@ -49,7 +50,9 @@ class RaytraceRenderer: public Renderer {
         /// How many times multiple mirrors can reflect light
         int maxBounces = 3;
         /// "Fuzziness" of metal
-        float metalFuzz = 0.8;
+        float metalFuzz = 0.125;
+        /// How many metal fuzz samples are taken to average over
+        int fuzzSamples = 5;
 
         //TODO: use these for optimisation
 //        glm::vec3 lastPos;
@@ -73,7 +76,9 @@ class RaytraceRenderer: public Renderer {
             int index, 
             glm::vec3 view,
             int bouncesLeft,
-            float fuzz = 0
+            float fuzz = 0,
+            glm::vec3 albedo = glm::vec3(1.0f),
+            uint32_t seed = 0
         );
         glm::vec3 calculatePointColour(
             const glm::vec3 &point, 
