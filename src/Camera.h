@@ -11,6 +11,8 @@ public:
     glm::mat3 orientation = glm::mat3(1.0f);
     /// Distance from camera to image plane
     float focalLength = 2.0f;
+    /// Distance to the focal plane
+    float focalDistance = 3.5f;
     /// Size of image plane
     float planeScale = 160.0f;
     /// auto orbiting flag

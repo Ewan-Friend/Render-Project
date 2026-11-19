@@ -15,8 +15,8 @@
 
 // Define globals for WIDTH and HEIGHT of the window (can be accessed from any renderer)
 // Stable: WIDTH = 320, HEIGHT = 240
-extern const int WIDTH = 320;
-extern const int HEIGHT = 240;
+extern const int WIDTH = 640;
+extern const int HEIGHT = 480;
 
 // Define global object and materials files 
 extern const std::string COR_OBJECT = "./cornell-box.obj";
@@ -54,7 +54,7 @@ std::vector<Surface> SCENE_SURFACES;
 // PICK SCENE HERE
 // TODO: ADD ARGUMENT TO PICK SCENE (MAYBE OVERKILL NO?)
 void loadScene() {
-    const ModelData scene = sceneBuilder.cornellMirrorBall(); 
+    const ModelData scene = sceneBuilder.mirrorBall(); 
     SCENE_TRIANGLES = scene.triangles;
     SCENE_VERTEX_NORMALS = scene.vertexNormals;
     SCENE_TEXTURE_TRIANGLES = scene.textureTriangles;
@@ -63,8 +63,7 @@ void loadScene() {
 
 void handleEvent(SDL_Event event, DrawingWindow &window) {
 	if (event.type == SDL_KEYDOWN) {
-        //TODO: CHANGE 'e' TO 'l' HERE
-        if (event.key.keysym.sym == SDLK_e) camera.toggleLookAt();
+        if (event.key.keysym.sym == SDLK_l) camera.toggleLookAt();
         else if (event.key.keysym.sym == SDLK_LEFT) camera.translate(glm::vec3(-cameraStepSize, 0, 0));
         else if (event.key.keysym.sym == SDLK_RIGHT) camera.translate(glm::vec3(cameraStepSize, 0, 0));
         else if (event.key.keysym.sym == SDLK_UP) camera.translate(glm::vec3(0, cameraStepSize, 0));
@@ -84,12 +83,12 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
         else if (event.key.keysym.sym == SDLK_QUOTE) camera.orbitUp(-theta_step);
         else if (event.key.keysym.sym == SDLK_q) camera.reset();
         // Light Positioning
-        else if (event.key.keysym.sym == SDLK_j) raytraceRenderer.lightPos.x -= lightStepSize;
-        else if (event.key.keysym.sym == SDLK_l) raytraceRenderer.lightPos.x += lightStepSize;
-        else if (event.key.keysym.sym == SDLK_k) raytraceRenderer.lightPos.y -= lightStepSize;
-        else if (event.key.keysym.sym == SDLK_i) raytraceRenderer.lightPos.y += lightStepSize;
-        else if (event.key.keysym.sym == SDLK_p) raytraceRenderer.lightPos.z -= lightStepSize;
-        else if (event.key.keysym.sym == SDLK_o) raytraceRenderer.lightPos.z += lightStepSize;
+//        else if (event.key.keysym.sym == SDLK_j) raytraceRenderer.lightPos.x -= lightStepSize;
+//        else if (event.key.keysym.sym == SDLK_l) raytraceRenderer.lightPos.x += lightStepSize;
+//        else if (event.key.keysym.sym == SDLK_k) raytraceRenderer.lightPos.y -= lightStepSize;
+//        else if (event.key.keysym.sym == SDLK_i) raytraceRenderer.lightPos.y += lightStepSize;
+//        else if (event.key.keysym.sym == SDLK_p) raytraceRenderer.lightPos.z -= lightStepSize;
+//        else if (event.key.keysym.sym == SDLK_o) raytraceRenderer.lightPos.z += lightStepSize;
         else if (event.key.keysym.sym == SDLK_TAB) savingFrames = !savingFrames;
         else if (event.key.keysym.sym == SDLK_RETURN) window.toggleFullscreen();
         // Change renderers
@@ -105,6 +104,19 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
             (raytraceRenderer.shading != RaytraceRenderer::ShadingMethod::Phong) ? 
                 raytraceRenderer.shading = RaytraceRenderer::ShadingMethod::Phong : 
                 raytraceRenderer.shading = RaytraceRenderer::ShadingMethod::Flat; 
+        // toggle soft shadows 
+        else if (event.key.keysym.sym == SDLK_h) raytraceRenderer.isSoftShadowOn = !raytraceRenderer.isSoftShadowOn; 
+        // toggle reflections (mirrors) 
+        else if (event.key.keysym.sym == SDLK_r) raytraceRenderer.isReflectionOn = !raytraceRenderer.isReflectionOn; 
+        // toggle glass materials
+        else if (event.key.keysym.sym == SDLK_g) raytraceRenderer.isGlassOn = !raytraceRenderer.isGlassOn; 
+        // toggle metal surfaces
+        else if (event.key.keysym.sym == SDLK_m) raytraceRenderer.isMetalOn = !raytraceRenderer.isMetalOn;
+        // toggle environment maps 
+        else if (event.key.keysym.sym == SDLK_e) raytraceRenderer.isEnvironmentOn = !raytraceRenderer.isEnvironmentOn;
+        // ADDITIONAL
+        // toggle depth of field
+        else if (event.key.keysym.sym == SDLK_f) raytraceRenderer.isDepthOn = !raytraceRenderer.isDepthOn;
 	}
 }
 

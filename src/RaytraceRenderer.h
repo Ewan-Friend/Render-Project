@@ -33,6 +33,13 @@ class RaytraceRenderer: public Renderer {
         enum class ShadingMethod { Flat = 0, Gouraud = 1, Phong = 2 };
         /// What the current shading method is
         ShadingMethod shading = ShadingMethod::Flat;
+        /// Toggles
+        bool isSoftShadowOn = true;
+        bool isReflectionOn = true;
+        bool isMetalOn = true;
+        bool isEnvironmentOn = true;
+        bool isGlassOn = true;
+        bool isDepthOn = false;
     private:
         Camera &camera;
         /// The maximum distance the camera will render
@@ -53,6 +60,10 @@ class RaytraceRenderer: public Renderer {
         float metalFuzz = 0.125;
         /// How many metal fuzz samples are taken to average over
         int fuzzSamples = 5;
+        /// How big the lens radius is
+        float aperture = 0.08;
+        /// How many samples are taken for depth of field 
+        int depthSamples = 16;
 
         //TODO: use these for optimisation
 //        glm::vec3 lastPos;
@@ -96,6 +107,7 @@ class RaytraceRenderer: public Renderer {
             glm::vec3 hitPoint,
             std::array<glm::vec3, 3> vNormals
         );
+        glm::vec3 rayTrace(glm::vec3 origin, glm::vec3 direction, uint32_t seed);
 
         bool loaded = false;
 };
