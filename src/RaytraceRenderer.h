@@ -56,7 +56,7 @@ class RaytraceRenderer: public Renderer {
         /// How much light a mirror reflects
         float reflectiveness = 0.75;
         /// How many times multiple mirrors can reflect light
-        int maxBounces = 3;
+        int maxBounces = 5;
         /// "Fuzziness" of metal
         float metalFuzz = 0.125;
         /// How many metal fuzz samples are taken to average over
@@ -64,7 +64,7 @@ class RaytraceRenderer: public Renderer {
         /// How big the lens radius is
         float aperture = 0.08;
         /// How many samples are taken for depth of field 
-        int depthSamples = 128;
+        int depthSamples = 16;
         /// The "shift" of a ray through glass material
         float indexOfRefraction = 1.5;
 

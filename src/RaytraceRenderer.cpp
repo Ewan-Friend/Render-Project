@@ -133,7 +133,6 @@ glm::vec3 convertToBarycentricCoordinates(glm::vec3 v0, glm::vec3 v1, glm::vec3 
     return glm::vec3(u,v,w);
 }
 
-//TODO: ADD GLOBAL FLAG TO TOGGLE ENVIRONMENT MAPS ON / OFF (return glm::vec3(0))
 /// Converts a direction vector to cubemap pixel 
 /// Concepts from https://en.wikipedia.org/wiki/Cube_mapping#Memory_addressing
 glm::vec3 RaytraceRenderer::getCubemapColour(glm::vec3 dir){
@@ -218,8 +217,6 @@ glm::vec3 randomUnitVector(uint32_t &seed){
     }
 }
 
-//TODO: PHONG SHADING ENABLER
-//TODO: ADD TOGGLE FOR MIRRORS
 /// colour is a reflection from the objects faces, can bounce multiple times
 glm::vec3 RaytraceRenderer::getReflectColour(
     const glm::vec3 &point, 
@@ -446,7 +443,6 @@ glm::vec3 RaytraceRenderer::rayTrace(glm::vec3 origin, glm::vec3 direction, uint
     return c;
 }
 
-// TODO: GET SHADER ENABLER TO SEE IF AN OBJECT SHOULD BE SHADED
 void RaytraceRenderer::draw(DrawingWindow &window) {
     // camera.update();
     window.clearPixels();
@@ -476,7 +472,6 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
             // Creates a new seed based on the pixel location (consistent randomness)
             uint32_t seed = (y * 10101) ^ (x * 80085) ^ 1234u;
             glm::vec3 c;
-            // TODO: PART OF CAMERA IF FEELIN IT
             // TODO: INVESTIGATE MULTIPLE BOKEH METHODS AND SWITCH BETWEEN
             if (aperture > 0 && isDepthOn){
                 glm::vec3 focalPoint = camera.position + direction * camera.focalDistance;
