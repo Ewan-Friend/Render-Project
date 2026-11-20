@@ -14,6 +14,7 @@ struct ModelData {
     std::vector<std::array<glm::vec3, 3>> vertexNormals;
     std::vector<std::string> textureTriangles;
     std::vector<Surface> surfaces;
+    std::vector<bool> shadings;
 };
 
 /// Holds data for whats drawn onto a face

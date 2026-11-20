@@ -18,4 +18,5 @@ extern std::vector<ModelTriangle> SCENE_TRIANGLES;
 extern std::vector<std::array<glm::vec3, 3>> SCENE_VERTEX_NORMALS;
 extern std::vector<std::string> SCENE_TEXTURE_TRIANGLES;
 extern std::vector<Surface> SCENE_SURFACES;
+extern std::vector<bool> SCENE_SHADINGS;
 extern int SCENE_VERSION;

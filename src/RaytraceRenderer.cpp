@@ -237,7 +237,7 @@ glm::vec3 RaytraceRenderer::getReflectColour(
 
     glm::vec3 mirrorReflection = glm::normalize(view - 2.0f * normal * (glm::dot(view, normal)));
     int samples = (fuzz > 0.0f) ? fuzzSamples : 1;
-    glm::vec3 totalColour(0.0f);
+    glm::vec3 total(0.0f);
 
     for (int i = 0; i < samples; i++){
         glm::vec3 currentReflection = mirrorReflection;
@@ -255,36 +255,10 @@ glm::vec3 RaytraceRenderer::getReflectColour(
                 continue;
             }
         }
-        RayTriangleIntersection intersection = getClosestIntersection(point + normal * 0.001f, currentReflection, triangles, index);
-
-        if (intersection.triangleIndex < 0 || intersection.distanceFromCamera >= renderDistance) {
-            totalColour += albedo * getCubemapColour(currentReflection);
-            continue;
-        }
-
-        ModelTriangle tri = intersection.intersectedTriangle;
-        Surface nextSurface = surfaces.at(intersection.triangleIndex);
-        if (nextSurface == Surface::Mirror) {
-            totalColour += getReflectColour(
-                intersection.intersectionPoint, tri.normal, intersection.triangleIndex,
-                currentReflection, bouncesLeft - 1, 0.0f, glm::vec3(1.0f)
-            );
-        } else if (nextSurface == Surface::Metal) {
-            glm::vec3 hitMetalAlbedo = glm::vec3(tri.colour.red, tri.colour.green, tri.colour.blue) / 255.0f;
-            totalColour += getReflectColour(
-                intersection.intersectionPoint, tri.normal, intersection.triangleIndex,
-                currentReflection, bouncesLeft - 1, metalFuzz, hitMetalAlbedo
-            );
-        } else {
-            totalColour += albedo * calculatePointColour(
-                intersection.intersectionPoint, 
-                tri.normal, 
-                tri, 
-                intersection.triangleIndex
-            );
-        }
+        glm::vec3 origin = point + normal * 0.001f;
+        total += rayTrace(origin, currentReflection, seed, bouncesLeft - 1, index);
     }
-    return totalColour / (float)samples;
+    return total / (float)samples;
 }
 
 /// Calculates the brightness of a single point
@@ -360,31 +334,32 @@ glm::vec3 RaytraceRenderer::phongShading(
     );
 }
 
-glm::vec3 RaytraceRenderer::rayTrace(glm::vec3 origin, glm::vec3 direction, uint32_t seed){
+glm::vec3 RaytraceRenderer::rayTrace(glm::vec3 origin, glm::vec3 direction, uint32_t seed, int bouncesLeft, int ignoreIndex){
     glm::vec3 c;
     RayTriangleIntersection intersection = getClosestIntersection( 
-        origin, direction, SCENE_TRIANGLES, -1
+        origin, direction, triangles, ignoreIndex
     ); 
     if (intersection.distanceFromCamera < renderDistance){ 
 
         glm::vec3 point = intersection.intersectionPoint;
         ModelTriangle tri = intersection.intersectedTriangle;
         int triIndex = intersection.triangleIndex;
+        glm::vec3 tint = glm::vec3(tri.colour.red, tri.colour.green, tri.colour.blue) / 255.0f;
+        ShadingMethod method = (!shadings[triIndex]) ? ShadingMethod::Flat : shading;
 
         glm::vec3 normal;
         std::array<glm::vec3, 3> vNormals = vertexNormals[triIndex];
-        switch(shading) {
+        switch(method) {
             case ShadingMethod::Flat:
                 normal = tri.normal;
-                //TODO: MAKE COLOURS CARRY ACROSS REFLECTION INSTEAD OF CHEATING
                 if (surfaces[triIndex] == Surface::Mirror && isReflectionOn) {
-                    c = getReflectColour(point, normal, triIndex, direction, maxBounces);
-        //                    * reflectiveness
-        //                    + calculatePointColour(point, normal, tri, triIndex) * (1 - reflectiveness);
+                    c = getReflectColour(point, normal, triIndex, direction, bouncesLeft);
+//                            * reflectiveness
+//                            + calculatePointColour(point, normal, tri, triIndex) * (1 - reflectiveness);
                 } else if (surfaces[triIndex] == Surface::Metal && isMetalOn) {
                     c = getReflectColour(
-                        point, normal, triIndex, direction, maxBounces, metalFuzz, glm::vec3(1.0f, 0.85f, 0.57f), seed
-                    );
+                        point, normal, triIndex, direction, bouncesLeft,
+                        metalFuzz, tint, seed);
                 } else {
                     c = calculatePointColour(point, normal, tri, triIndex);
                 }
@@ -393,13 +368,13 @@ glm::vec3 RaytraceRenderer::rayTrace(glm::vec3 origin, glm::vec3 direction, uint
             case ShadingMethod::Gouraud:
                 normal = tri.normal;
                 if (surfaces[triIndex] == Surface::Mirror && isReflectionOn) {
-                    c = getReflectColour(point, normal, triIndex, direction, maxBounces);
-        //                    * reflectiveness
-        //                    + gouraudShading(intersection, point, vNormals) * (1 - reflectiveness);
+                    c = getReflectColour(point, normal, triIndex, direction, bouncesLeft);
+//                            * reflectiveness
+//                            + gouraudShading(intersection, point, vNormals) * (1 - reflectiveness);
                 } else if (surfaces[triIndex] == Surface::Metal && isMetalOn) {
                     c = getReflectColour(
-                        point, normal, triIndex, direction, maxBounces, metalFuzz, glm::vec3(1.0f, 0.85f, 0.57f), seed
-                    );
+                        point, normal, triIndex, direction, bouncesLeft,
+                        metalFuzz, tint, seed);
                 } else {
                     c = gouraudShading(intersection, point, vNormals);
                 }
@@ -408,12 +383,15 @@ glm::vec3 RaytraceRenderer::rayTrace(glm::vec3 origin, glm::vec3 direction, uint
             case ShadingMethod::Phong:
                 normal = phongShading(intersection, point, vNormals);
                 if (surfaces[triIndex] == Surface::Mirror && isReflectionOn) {
-                    c = getReflectColour(point, normal, triIndex, direction, maxBounces) * reflectiveness
-                    + calculatePointColour(point, normal, tri, triIndex) * (1 - reflectiveness);
+               glm::vec3 tint = glm::vec3(
+    tri.colour.red, tri.colour.green, tri.colour.blue) / 255.0f;     c = getReflectColour(point, normal, triIndex, direction, bouncesLeft);
+//                        * reflectiveness
+//                        + calculatePointColour(point, normal, tri, triIndex)
+//                        * (1 - reflectiveness);
                 } else if (surfaces[triIndex] == Surface::Metal && isMetalOn) {
                     c = getReflectColour(
-                        point, normal, triIndex, direction, maxBounces, metalFuzz, glm::vec3(1.0f, 0.85f, 0.57f), seed
-                    );
+                        point, normal, triIndex, direction, bouncesLeft,
+                        metalFuzz, tint, seed);
                 } else {
                     c = calculatePointColour(point, normal, tri, triIndex);
                 }
@@ -435,6 +413,7 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
         vertexNormals = SCENE_VERTEX_NORMALS;
         textureTriangles = SCENE_TEXTURE_TRIANGLES;
         surfaces = SCENE_SURFACES;
+        shadings = SCENE_SHADINGS;
         for (const std::string &name : textureTriangles) {
             if (!name.empty() && !textures.count(name)) {
                 textures[name] = TextureMap(name);
@@ -473,12 +452,12 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
                     glm::vec3 lensOffset = right * (u * aperture) + up * (v * aperture); 
                     glm::vec3 origin = camera.position + lensOffset;
                     glm::vec3 sampleDirection = glm::normalize(focalPoint - origin);
-                    total += rayTrace(origin, sampleDirection, seed);
+                    total += rayTrace(origin, sampleDirection, seed, maxBounces);
                 }
                 c = total / (float)depthSamples;
             }
             else{
-                c = rayTrace(camera.position, direction, seed);
+                c = rayTrace(camera.position, direction, seed, maxBounces);
             }
             uint32_t r = (uint32_t)std::min(255.0f, std::max(0.0f, c.r));
             uint32_t g = (uint32_t)std::min(255.0f, std::max(0.0f, c.g));

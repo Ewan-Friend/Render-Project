@@ -13,7 +13,8 @@ SceneBuilder& SceneBuilder::createObject(
     const std::string &mtlFile, 
     glm::vec3 offset, 
     float scale,
-    Surface surface
+    Surface surface,
+    bool shading
 )
 {
     ModelData data = mtlFile.empty() ? parseObj(objFile) : parseObj(objFile, parseMat(mtlFile));
@@ -24,6 +25,7 @@ SceneBuilder& SceneBuilder::createObject(
         }
         triangles.push_back(tri);
         surfaces.push_back(surface);
+        shadings.push_back(shading);
     }
 
     for (std::array<glm::vec3, 3> &vn: data.vertexNormals){
@@ -46,7 +48,7 @@ SceneBuilder& SceneBuilder::surfaceFace(Surface surface, std::vector<int> triInd
 
 /// Return model data from the scene
 ModelData SceneBuilder::build() const {
-    return {triangles, vertexNormals, textureTriangles, surfaces};
+    return {triangles, vertexNormals, textureTriangles, surfaces, shadings};
 }
 
 /// SCENE DESCRIPTION:
@@ -61,7 +63,7 @@ ModelData SceneBuilder::cornellScene() {
 /// who could have guessed... its a cornell box... with a sphere...
 ModelData SceneBuilder::cornellAndSphereScene() {
     ModelData scene = createObject(COR_OBJECT, COR_MATERIAL)
-        .createObject(SPHERE_OBJECT, "", glm::vec3(-0.5, -1.11, 0.5), 0.8)
+        .createObject(SPHERE_OBJECT, material, offset, scale, surface, true)
         .build();
     return scene;
 } 
@@ -70,8 +72,8 @@ ModelData SceneBuilder::cornellAndSphereScene() {
 /// Same as the cornell box with the sphere, as well as a little rabbit familiar 
 ModelData SceneBuilder::cornellBunnyCage() {
     ModelData scene = createObject(COR_OBJECT, COR_MATERIAL)
-        .createObject(SPHERE_OBJECT, "", glm::vec3(-0.5, -1.1, 0.5), 0.8)
-        .createObject(BUNNY_OBJECT, BUNNY_MATERIAL)
+        .createObject(SPHERE_OBJECT, material, offset, scale, surface, true)
+        .createObject(BUNNY_OBJECT, BUNNY_MATERIAL, offset, scale, surface, true)
         .build();
     return scene;
 } 
@@ -98,7 +100,7 @@ ModelData SceneBuilder::cornellMirror() {
 /// Ball wit the mirror on it
 ModelData SceneBuilder::mirrorBall() {
     ModelData scene = createObject(SPHERE_OBJECT, "", glm::vec3(0), 1, Surface::Mirror)
-        .createObject(SPHERE_OBJECT, "", glm::vec3(-0.65, 0.04, -0.35), 0.8, Surface::Metal)
+        .createObject(SPHERE_OBJECT, "", glm::vec3(-0.65, 0.04, -0.35), 0.8, Surface::Metal, true)
         .build();
     return scene;
 }
@@ -107,7 +109,18 @@ ModelData SceneBuilder::mirrorBall() {
 /// Cornell Box wit the ball wit the mirror on it
 ModelData SceneBuilder::cornellMirrorBall() {
     ModelData scene = createObject(COR_OBJECT, COR_MATERIAL)
-        .createObject(SPHERE_OBJECT, "", glm::vec3(-0.35, 0.04, -0.35), 0.8, Surface::Mirror)
+        .createObject(SPHERE_OBJECT, "", glm::vec3(-0.35, 0.04, -0.35), 0.8, Surface::Mirror, true)
+        .build();
+    return scene;
+} 
+
+/// SCENE DESCRIPTION
+/// Cornell box with everything needed to showcase 
+ModelData SceneBuilder::kitchenSink() {
+    ModelData scene = createObject(COR_OBJECT, COR_MATERIAL)
+        .surfaceFace(Surface::Mirror, faces)
+        .createObject(SPHERE_OBJECT, material, glm::vec3(-0.5, -1.1, 0.5), 0.8, Surface::Metal, true)
+        .createObject(BUNNY_OBJECT, BUNNY_MATERIAL, offset, scale, surface, true)
         .build();
     return scene;
 } 

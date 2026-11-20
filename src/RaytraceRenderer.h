@@ -26,6 +26,7 @@ class RaytraceRenderer: public Renderer {
         std::unordered_map<std::string, TextureMap> textures;
         std::vector<Surface> surfaces;
         std::vector<TextureMap> cubemapFaces;
+        std::vector<bool> shadings;
 
         /// Base position of the light
         glm::vec3 lightPos = glm::vec3(0, 0.8, 1);
@@ -34,7 +35,7 @@ class RaytraceRenderer: public Renderer {
         /// What the current shading method is
         ShadingMethod shading = ShadingMethod::Flat;
         /// Toggles
-        bool isSoftShadowOn = true;
+        bool isSoftShadowOn = false;
         bool isReflectionOn = true;
         bool isMetalOn = true;
         bool isEnvironmentOn = true;
@@ -53,7 +54,7 @@ class RaytraceRenderer: public Renderer {
         /// How spread out the light source is (for soft shadows)
         float lightSpread = 0.15;
         /// How much light a mirror reflects
-        float reflectiveness = 0.7f;
+        float reflectiveness = 0.75;
         /// How many times multiple mirrors can reflect light
         int maxBounces = 3;
         /// "Fuzziness" of metal
@@ -63,7 +64,7 @@ class RaytraceRenderer: public Renderer {
         /// How big the lens radius is
         float aperture = 0.08;
         /// How many samples are taken for depth of field 
-        int depthSamples = 16;
+        int depthSamples = 128;
 
         //TODO: use these for optimisation
 //        glm::vec3 lastPos;
@@ -107,7 +108,7 @@ class RaytraceRenderer: public Renderer {
             glm::vec3 hitPoint,
             std::array<glm::vec3, 3> vNormals
         );
-        glm::vec3 rayTrace(glm::vec3 origin, glm::vec3 direction, uint32_t seed);
-
+        glm::vec3 rayTrace(glm::vec3 origin, glm::vec3 direction, uint32_t seed, int bouncesLeft, int ignoreIndex = -1);
         bool loaded = false;
+
 };

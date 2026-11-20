@@ -41,6 +41,7 @@ WireframeRenderer wireframeRenderer = WireframeRenderer(camera);
 Renderer* currentRenderer = &raytraceRenderer;
 bool savingFrames = false;
 int frameCounter = 0;
+bool redraw = true;
 
 // Control variables
 float cameraStepSize = 0.25;
@@ -51,18 +52,21 @@ std::vector<ModelTriangle> SCENE_TRIANGLES;
 std::vector<std::array<glm::vec3, 3>> SCENE_VERTEX_NORMALS;
 std::vector<std::string> SCENE_TEXTURE_TRIANGLES;
 std::vector<Surface> SCENE_SURFACES;
+std::vector<bool> SCENE_SHADINGS;
 // PICK SCENE HERE
 // TODO: ADD ARGUMENT TO PICK SCENE (MAYBE OVERKILL NO?)
 void loadScene() {
-    const ModelData scene = sceneBuilder.mirrorBall(); 
+    const ModelData scene = sceneBuilder.kitchenSink(); 
     SCENE_TRIANGLES = scene.triangles;
     SCENE_VERTEX_NORMALS = scene.vertexNormals;
     SCENE_TEXTURE_TRIANGLES = scene.textureTriangles;
     SCENE_SURFACES = scene.surfaces;
+    SCENE_SHADINGS = scene.shadings;
 }
 
 void handleEvent(SDL_Event event, DrawingWindow &window) {
 	if (event.type == SDL_KEYDOWN) {
+        redraw = true;
         if (event.key.keysym.sym == SDLK_l) camera.toggleLookAt();
         else if (event.key.keysym.sym == SDLK_LEFT) camera.translate(glm::vec3(-cameraStepSize, 0, 0));
         else if (event.key.keysym.sym == SDLK_RIGHT) camera.translate(glm::vec3(cameraStepSize, 0, 0));
@@ -83,12 +87,12 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
         else if (event.key.keysym.sym == SDLK_QUOTE) camera.orbitUp(-theta_step);
         else if (event.key.keysym.sym == SDLK_q) camera.reset();
         // Light Positioning
-//        else if (event.key.keysym.sym == SDLK_j) raytraceRenderer.lightPos.x -= lightStepSize;
-//        else if (event.key.keysym.sym == SDLK_l) raytraceRenderer.lightPos.x += lightStepSize;
-//        else if (event.key.keysym.sym == SDLK_k) raytraceRenderer.lightPos.y -= lightStepSize;
-//        else if (event.key.keysym.sym == SDLK_i) raytraceRenderer.lightPos.y += lightStepSize;
-//        else if (event.key.keysym.sym == SDLK_p) raytraceRenderer.lightPos.z -= lightStepSize;
-//        else if (event.key.keysym.sym == SDLK_o) raytraceRenderer.lightPos.z += lightStepSize;
+        else if (event.key.keysym.sym == SDLK_z) raytraceRenderer.lightPos.x -= lightStepSize;
+        else if (event.key.keysym.sym == SDLK_x) raytraceRenderer.lightPos.x += lightStepSize;
+        else if (event.key.keysym.sym == SDLK_c) raytraceRenderer.lightPos.y -= lightStepSize;
+        else if (event.key.keysym.sym == SDLK_v) raytraceRenderer.lightPos.y += lightStepSize;
+        else if (event.key.keysym.sym == SDLK_b) raytraceRenderer.lightPos.z -= lightStepSize;
+        else if (event.key.keysym.sym == SDLK_n) raytraceRenderer.lightPos.z += lightStepSize;
         else if (event.key.keysym.sym == SDLK_TAB) savingFrames = !savingFrames;
         else if (event.key.keysym.sym == SDLK_RETURN) window.toggleFullscreen();
         // Change renderers
@@ -125,12 +129,17 @@ int main(int argc, char *argv[]) {
 	SDL_Event event;
     loadScene();
 	while (true) {
+        if (redraw){
+            currentRenderer->draw(window);
+            redraw = false;
+        }
 		// We MUST poll for events - otherwise the window will freeze !
 		if (window.pollForInputEvents(event)) handleEvent(event, window);
 		// In C++ we can't use "." notation for dynamic dispatch, so we have to use -> instead :o(
-		currentRenderer->draw(window);
+//		currentRenderer->draw(window);
 		// Need to ask the SDL window to render the frame, otherwise nothing actually gets shown on the screen !
 		window.renderFrame();
+
 		if(savingFrames) {
 			std::string paddedCounter = std::to_string(frameCounter);
 			while(paddedCounter.length() < 6) paddedCounter = "0" + paddedCounter;
