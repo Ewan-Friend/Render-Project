@@ -6,7 +6,7 @@
 #include "ModelTriangle.h"
 
 /// Holds data for whats reflected from a face
-enum class Surface { Base = 0, Mirror = 1, Metal = 2 };
+enum class Surface { Base = 0, Mirror = 1, Metal = 2, Glass = 3 };
 
 /// Holds basic data about the model
 struct ModelData {

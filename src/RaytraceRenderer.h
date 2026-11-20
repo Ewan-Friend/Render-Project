@@ -65,6 +65,8 @@ class RaytraceRenderer: public Renderer {
         float aperture = 0.08;
         /// How many samples are taken for depth of field 
         int depthSamples = 128;
+        /// The "shift" of a ray through glass material
+        float indexOfRefraction = 1.5;
 
         //TODO: use these for optimisation
 //        glm::vec3 lastPos;
@@ -91,6 +93,14 @@ class RaytraceRenderer: public Renderer {
             float fuzz = 0,
             glm::vec3 albedo = glm::vec3(1.0f),
             uint32_t seed = 0
+        );
+        glm::vec3 getGlassColour(
+            const glm::vec3 &point, 
+            glm::vec3 normal, 
+            int index, 
+            glm::vec3 view, 
+            int bouncesLeft,
+            uint32_t seed
         );
         glm::vec3 calculatePointColour(
             const glm::vec3 &point, 

@@ -261,6 +261,42 @@ glm::vec3 RaytraceRenderer::getReflectColour(
     return total / (float)samples;
 }
 
+glm::vec3 RaytraceRenderer::getGlassColour(
+    const glm::vec3 &point, 
+    glm::vec3 normal, 
+    int index, 
+    glm::vec3 view, 
+    int bouncesLeft,
+    uint32_t seed
+) {
+    if (bouncesLeft <= 0) return getCubemapColour(view);
+
+    bool enter = glm::dot(view, normal) < 0;
+
+    if (!enter) normal = -normal;
+    float eta1 = enter ? 1 : indexOfRefraction;
+    float eta2 = enter ? indexOfRefraction : 1;
+
+    float cosTheta = std::fmin(glm::dot(-view, normal), 1);
+    float sinTheta = std::sqrt(1 - cosTheta * cosTheta);
+    
+    glm::vec3 directedRay;
+    glm::vec3 origin;
+    float refractionIndex = (enter) ? 1/indexOfRefraction : indexOfRefraction;
+
+    bool refract = refractionIndex * sinTheta <= 1;
+    if (!refract){
+        directedRay = glm::normalize(view - 2.0f * normal * (glm::dot(view, normal)));
+        origin = point + normal * 0.001f;
+    } else {
+        glm::vec3 perpendicular = (eta1 / eta2) * (view + cosTheta * normal);
+        glm::vec3 parallel = -std::sqrt(std::fabs(1 - glm::dot(perpendicular, perpendicular))) * normal;
+        directedRay = perpendicular + parallel;
+        origin = point - normal * 0.001f;
+    }
+    return rayTrace(point, directedRay, seed, bouncesLeft - 1);
+}
+
 /// Calculates the brightness of a single point
 glm::vec3 RaytraceRenderer::calculatePointColour(
     const glm::vec3 &point, 
@@ -360,6 +396,8 @@ glm::vec3 RaytraceRenderer::rayTrace(glm::vec3 origin, glm::vec3 direction, uint
                     c = getReflectColour(
                         point, normal, triIndex, direction, bouncesLeft,
                         metalFuzz, tint, seed);
+                } else if (surfaces[triIndex] == Surface::Glass && isGlassOn){
+                    c = getGlassColour(point, normal, triIndex, direction, bouncesLeft, seed);
                 } else {
                     c = calculatePointColour(point, normal, tri, triIndex);
                 }
@@ -375,6 +413,8 @@ glm::vec3 RaytraceRenderer::rayTrace(glm::vec3 origin, glm::vec3 direction, uint
                     c = getReflectColour(
                         point, normal, triIndex, direction, bouncesLeft,
                         metalFuzz, tint, seed);
+                } else if (surfaces[triIndex] == Surface::Glass && isGlassOn){
+
                 } else {
                     c = gouraudShading(intersection, point, vNormals);
                 }
@@ -384,7 +424,7 @@ glm::vec3 RaytraceRenderer::rayTrace(glm::vec3 origin, glm::vec3 direction, uint
                 normal = phongShading(intersection, point, vNormals);
                 if (surfaces[triIndex] == Surface::Mirror && isReflectionOn) {
                glm::vec3 tint = glm::vec3(
-    tri.colour.red, tri.colour.green, tri.colour.blue) / 255.0f;     c = getReflectColour(point, normal, triIndex, direction, bouncesLeft);
+                    tri.colour.red, tri.colour.green, tri.colour.blue) / 255.0f;     c = getReflectColour(point, normal, triIndex, direction, bouncesLeft);
 //                        * reflectiveness
 //                        + calculatePointColour(point, normal, tri, triIndex)
 //                        * (1 - reflectiveness);
@@ -392,6 +432,8 @@ glm::vec3 RaytraceRenderer::rayTrace(glm::vec3 origin, glm::vec3 direction, uint
                     c = getReflectColour(
                         point, normal, triIndex, direction, bouncesLeft,
                         metalFuzz, tint, seed);
+                } else if (surfaces[triIndex] == Surface::Glass && isGlassOn){
+                    c = getGlassColour(point, normal, triIndex, direction, bouncesLeft, seed);
                 } else {
                     c = calculatePointColour(point, normal, tri, triIndex);
                 }

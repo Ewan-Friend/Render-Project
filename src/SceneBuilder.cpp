@@ -119,8 +119,9 @@ ModelData SceneBuilder::cornellMirrorBall() {
 ModelData SceneBuilder::kitchenSink() {
     ModelData scene = createObject(COR_OBJECT, COR_MATERIAL)
         .surfaceFace(Surface::Mirror, faces)
-        .createObject(SPHERE_OBJECT, material, glm::vec3(-0.5, -1.1, 0.5), 0.8, Surface::Metal, true)
-        .createObject(BUNNY_OBJECT, BUNNY_MATERIAL, offset, scale, surface, true)
+        .createObject(SPHERE_OBJECT, material, glm::vec3(-0.5, -1.1, 0.5), 0.8, Surface::Glass, true)
+        .createObject(SPHERE_OBJECT, material, glm::vec3(-0.3, 0.1, -0.3), 0.8, Surface::Metal, true)
+        .createObject(BUNNY_OBJECT, BUNNY_MATERIAL, offset, scale, Surface::Glass, true)
         .build();
     return scene;
 } 
