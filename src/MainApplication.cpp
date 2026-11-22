@@ -7,6 +7,7 @@
 #include "RaytraceRenderer.h"
 #include "Camera.h"
 #include "SceneTypes.h"
+#include "Ident.h"
 #include "glm/detail/func_trigonometric.hpp"
 #include "glm/detail/type_vec.hpp"
 #include <SDL_keycode.h>
@@ -42,6 +43,7 @@ Renderer* currentRenderer = &raytraceRenderer;
 bool savingFrames = false;
 int frameCounter = 0;
 bool redraw = true;
+Ident ident = Ident(redraw);
 
 // Control variables
 float cameraStepSize = 0.25;
@@ -121,9 +123,13 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
         // ADDITIONAL
         // toggle depth of field
         else if (event.key.keysym.sym == SDLK_f) raytraceRenderer.isDepthOn = !raytraceRenderer.isDepthOn;
+        else if (event.key.keysym.sym == SDLK_SPACE){ 
+            ident.initialise(camera);
+            savingFrames = true;
+            frameCounter = 0;
+        }
 	}
 }
-
 
 int main(int argc, char *argv[]) {
 	SDL_Event event;
@@ -136,7 +142,11 @@ int main(int argc, char *argv[]) {
 		// We MUST poll for events - otherwise the window will freeze !
 		if (window.pollForInputEvents(event)) handleEvent(event, window);
 		// In C++ we can't use "." notation for dynamic dispatch, so we have to use -> instead :o(
-//		currentRenderer->draw(window);
+//      currentRenderer->draw(window);
+
+        if (ident.active) ident.step(camera);
+        if (!ident.active) savingFrames = false;
+
 		// Need to ask the SDL window to render the frame, otherwise nothing actually gets shown on the screen !
 		window.renderFrame();
 
