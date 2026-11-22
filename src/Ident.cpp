@@ -1,4 +1,5 @@
 #include "Ident.h"
+#include "Globals.h"
 
 void Ident::initialise(Camera &camera) {
     frame = 0;
@@ -7,9 +8,10 @@ void Ident::initialise(Camera &camera) {
 }
 
 void Ident::step(Camera &camera){
-    if (frame < 120){
-        camera.orbitY(theta);
-    }
+    //if (frame < 9999){
+    //    camera.orbitY(theta);
+    //}
+    animateScene(frame);
     frame++;
     redraw = true;
 }

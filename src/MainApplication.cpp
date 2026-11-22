@@ -51,20 +51,80 @@ float lightStepSize = 0.1;
 float theta_step = glm::radians(5.0f);
 
 std::vector<ModelTriangle> SCENE_TRIANGLES;
+std::vector<ModelTriangle> SCENE_BASE_TRIANGLES;
 std::vector<std::array<glm::vec3, 3>> SCENE_VERTEX_NORMALS;
 std::vector<std::string> SCENE_TEXTURE_TRIANGLES;
 std::vector<Surface> SCENE_SURFACES;
 std::vector<bool> SCENE_SHADINGS;
+int ANIM_START;
+int ANIM_COUNT;
 // PICK SCENE HERE
 // TODO: ADD ARGUMENT TO PICK SCENE (MAYBE OVERKILL NO?)
 void loadScene() {
-    const ModelData scene = sceneBuilder.kitchenSink(); 
+    const ModelData scene = sceneBuilder.animatedSphere(); 
     SCENE_TRIANGLES = scene.triangles;
+    SCENE_BASE_TRIANGLES = scene.triangles;
     SCENE_VERTEX_NORMALS = scene.vertexNormals;
     SCENE_TEXTURE_TRIANGLES = scene.textureTriangles;
     SCENE_SURFACES = scene.surfaces;
     SCENE_SHADINGS = scene.shadings;
 }
+
+void animateScene(int frame) {
+    float gravity = 0.003f;
+    float floor_height = 0.07f;
+    int squash_length = 6;
+    float squash_strength = 0.6;
+
+    static float y = 1.3f, velY = 0.0f, squash = 0.0f;
+    static int squashFrames = 0;
+
+    glm::vec3 bottom(FLT_MAX), top(-FLT_MAX);
+    for (int i = ANIM_START; i < ANIM_START + ANIM_COUNT; i++) {
+        for (int j = 0; j < 3; j++) {
+            bottom = glm::min(bottom, SCENE_BASE_TRIANGLES[i].vertices[j]);
+            top = glm::max(top, SCENE_BASE_TRIANGLES[i].vertices[j]);
+        }
+    }
+    // Gets middle bottom point to math all over
+    glm::vec3 pivot((bottom.x + top.x) * 0.5f, bottom.y, (bottom.z + top.z) * 0.5f);
+
+    float scaleY = 1, scaleXZ = 1;
+    if (squashFrames > 0) {
+        y = floor_height;
+        scaleY = 1.0f - squash * (squashFrames / (float)squash_length);
+        scaleXZ = 1.0f / std::sqrt(scaleY);
+        squashFrames--;
+    } else {
+        velY -= gravity; 
+        y += velY;
+
+        if (y <= floor_height) {
+            y = floor_height;
+            if (std::fabs(velY) > 0.005f) {
+                squash = std::min(squash_strength, std::fabs(velY) * 3.5f);
+                squashFrames = squash_length;
+                velY = -velY * 0.79f;
+            } else {
+                velY = 0.0f;
+            }
+        }
+    }
+
+    glm::vec3 move(frame * 0.002f, y, 0.0f);
+    glm::vec3 scale(scaleXZ, scaleY, scaleXZ);
+    for (int i = ANIM_START; i < ANIM_START + ANIM_COUNT; i++) {
+        for (int j = 0; j < 3; j++) {
+            glm::vec3 local = SCENE_BASE_TRIANGLES[i].vertices[j] - pivot;
+            SCENE_TRIANGLES[i].vertices[j] = pivot + local * scale + move;
+        }
+        SCENE_TRIANGLES[i].normal = glm::normalize(glm::cross(
+            SCENE_TRIANGLES[i].vertices[1] - SCENE_TRIANGLES[i].vertices[0],
+            SCENE_TRIANGLES[i].vertices[2] - SCENE_TRIANGLES[i].vertices[0]
+        ));
+    }
+}
+
 
 void handleEvent(SDL_Event event, DrawingWindow &window) {
 	if (event.type == SDL_KEYDOWN) {

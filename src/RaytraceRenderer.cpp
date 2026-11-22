@@ -447,7 +447,7 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
     // camera.update();
     window.clearPixels();
     if (!loaded) {
-        triangles = SCENE_TRIANGLES;
+        //triangles = SCENE_TRIANGLES;
         vertexNormals = SCENE_VERTEX_NORMALS;
         textureTriangles = SCENE_TEXTURE_TRIANGLES;
         surfaces = SCENE_SURFACES;
@@ -464,6 +464,7 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
         }
         loaded = true;
     }
+    triangles = SCENE_TRIANGLES;
 
     #pragma omp parallel for schedule(dynamic, 16)
     for (int x = 0; x < WIDTH; x++){

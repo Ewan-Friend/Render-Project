@@ -88,10 +88,9 @@ ModelData SceneBuilder::texturedFloor() {
 
 /// SCENE DESCRIPTION
 /// A cornell box where one of the faces is a mirror
-std::vector<int> faces = {26, 31};
 ModelData SceneBuilder::cornellMirror() {
     ModelData scene = createObject(COR_OBJECT, COR_MATERIAL)
-        .surfaceFace(Surface::Mirror, faces)
+        .surfaceFace(Surface::Mirror, tallBoxFrontFace)
         .build();
     return scene;
 }
@@ -118,10 +117,21 @@ ModelData SceneBuilder::cornellMirrorBall() {
 /// Cornell box with everything needed to showcase 
 ModelData SceneBuilder::kitchenSink() {
     ModelData scene = createObject(COR_OBJECT, COR_MATERIAL)
-        .surfaceFace(Surface::Mirror, faces)
+        .surfaceFace(Surface::Mirror, tallBoxFrontFace)
         .createObject(SPHERE_OBJECT, material, glm::vec3(-0.5, -1.1, 0.5), 0.8, Surface::Glass, true)
         .createObject(SPHERE_OBJECT, material, glm::vec3(-0.3, 0.1, -0.3), 0.8, Surface::Metal, true)
         .createObject(BUNNY_OBJECT, BUNNY_MATERIAL, offset, scale, Surface::Glass, true)
         .build();
     return scene;
 } 
+
+/// SCENE DESCRIPTION 
+/// Cornell box with a bouncing ball and back mirror
+ModelData SceneBuilder::animatedSphere(){
+    createObject(COR_OBJECT, COR_MATERIAL);
+    surfaceFace(Surface::Mirror, backWall);
+    ANIM_START = triangles.size();
+    createObject(SPHERE_OBJECT, material, glm::vec3(-0.5, -1.1, 0.5), 0.4, Surface::Glass, true);
+    ANIM_COUNT = triangles.size() - ANIM_START;
+    return build();
+}

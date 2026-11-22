@@ -87,7 +87,8 @@ build/Ident.o: src/Ident.cpp src/Ident.h src/Camera.h \
   libs/glm-0.9.7.2/glm/integer.hpp \
   libs/glm-0.9.7.2/glm/detail/func_integer.hpp \
   libs/glm-0.9.7.2/glm/detail/func_integer.inl libs/sdw/CanvasPoint.h \
-  libs/sdw/TexturePoint.h
+  libs/sdw/TexturePoint.h src/Globals.h libs/sdw/ModelTriangle.h \
+  libs/sdw/Colour.h src/SceneTypes.h
 src/Ident.h:
 src/Camera.h:
 libs/glm-0.9.7.2/glm/detail/type_vec.hpp:
@@ -183,3 +184,7 @@ libs/glm-0.9.7.2/glm/detail/func_integer.hpp:
 libs/glm-0.9.7.2/glm/detail/func_integer.inl:
 libs/sdw/CanvasPoint.h:
 libs/sdw/TexturePoint.h:
+src/Globals.h:
+libs/sdw/ModelTriangle.h:
+libs/sdw/Colour.h:
+src/SceneTypes.h:

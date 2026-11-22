@@ -13,6 +13,9 @@ public:
     int scale = 1;
     Surface surface = Surface::Base;
 
+
+    std::vector<int> tallBoxFrontFace = {26, 31};
+    std::vector<int> backWall = {2, 3};
     
     std::vector<ModelTriangle> triangles;
     std::vector<std::array<glm::vec3, 3>> vertexNormals;
@@ -38,6 +41,6 @@ public:
     ModelData cornellMirror();
     ModelData mirrorBall();
     ModelData cornellMirrorBall();
-
     ModelData kitchenSink();
+    ModelData animatedSphere();
 };

@@ -33,7 +33,7 @@ class RaytraceRenderer: public Renderer {
         /// Types of shading that the renderer can take
         enum class ShadingMethod { Flat = 0, Gouraud = 1, Phong = 2 };
         /// What the current shading method is
-        ShadingMethod shading = ShadingMethod::Flat;
+        ShadingMethod shading = ShadingMethod::Phong;
         /// Toggles
         bool isSoftShadowOn = false;
         bool isReflectionOn = true;
@@ -119,6 +119,7 @@ class RaytraceRenderer: public Renderer {
             std::array<glm::vec3, 3> vNormals
         );
         glm::vec3 rayTrace(glm::vec3 origin, glm::vec3 direction, uint32_t seed, int bouncesLeft, int ignoreIndex = -1);
+        void animateBounce(int frame);
         bool loaded = false;
 
 };
