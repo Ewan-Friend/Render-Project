@@ -27,6 +27,8 @@ extern const std::string BUNNY_OBJECT = "./models/bunny/bunny.obj";
 extern const std::string BUNNY_MATERIAL = "./models/bunny/bunny.mtl";
 extern const std::string TEX_OBJECT = "./models/t_cornell/textured-cornell-box.obj";
 extern const std::string TEX_MATERIAL = "./models/t_cornell/textured-cornell-box.mtl";
+extern const std::string HACK_OBJECT = "./models/hackspace/logo.obj";
+extern const std::string HACK_MATERIAL = "./models/hackspace/materials.mtl";
 
 extern const std::string COBBLES = "./models/t_cornell/texture.ppm";
 
@@ -61,7 +63,7 @@ int ANIM_COUNT;
 // PICK SCENE HERE
 // TODO: ADD ARGUMENT TO PICK SCENE (MAYBE OVERKILL NO?)
 void loadScene() {
-    const ModelData scene = sceneBuilder.animatedSphere(); 
+    const ModelData scene = sceneBuilder.kitchenSink(); 
     SCENE_TRIANGLES = scene.triangles;
     SCENE_BASE_TRIANGLES = scene.triangles;
     SCENE_VERTEX_NORMALS = scene.vertexNormals;
@@ -75,10 +77,9 @@ void animateScene(int frame) {
     float floor_height = 0.07f;
     int squash_length = 6;
     float squash_strength = 0.6;
-
     static float y = 1.3f, velY = 0.0f, squash = 0.0f;
+    if (frame == 0) y = 1.3f, velY = 0.0f, squash = 0.0f;
     static int squashFrames = 0;
-
     glm::vec3 bottom(FLT_MAX), top(-FLT_MAX);
     for (int i = ANIM_START; i < ANIM_START + ANIM_COUNT; i++) {
         for (int j = 0; j < 3; j++) {
@@ -88,7 +89,6 @@ void animateScene(int frame) {
     }
     // Gets middle bottom point to math all over
     glm::vec3 pivot((bottom.x + top.x) * 0.5f, bottom.y, (bottom.z + top.z) * 0.5f);
-
     float scaleY = 1, scaleXZ = 1;
     if (squashFrames > 0) {
         y = floor_height;
@@ -98,7 +98,6 @@ void animateScene(int frame) {
     } else {
         velY -= gravity; 
         y += velY;
-
         if (y <= floor_height) {
             y = floor_height;
             if (std::fabs(velY) > 0.005f) {
@@ -110,7 +109,6 @@ void animateScene(int frame) {
             }
         }
     }
-
     glm::vec3 move(frame * 0.002f, y, 0.0f);
     glm::vec3 scale(scaleXZ, scaleY, scaleXZ);
     for (int i = ANIM_START; i < ANIM_START + ANIM_COUNT; i++) {

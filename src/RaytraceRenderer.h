@@ -29,7 +29,7 @@ class RaytraceRenderer: public Renderer {
         std::vector<bool> shadings;
 
         /// Base position of the light
-        glm::vec3 lightPos = glm::vec3(0, 0.8, 1);
+        glm::vec3 lightPos = glm::vec3(0, 0.8, 0);
         /// Types of shading that the renderer can take
         enum class ShadingMethod { Flat = 0, Gouraud = 1, Phong = 2 };
         /// What the current shading method is
@@ -46,32 +46,29 @@ class RaytraceRenderer: public Renderer {
         /// The maximum distance the camera will render
         float renderDistance = FLT_MAX;
         /// How bright the light is
-        float lightStrength = 32.0f;
+        float lightStrength = 24.0f;
         /// "Strength" of the specular lighting (shininess)
-        int specularExponent = 256;
+        int specularExponent = 128;
         /// How dark a pixel can be
         float minBrightnessThreshold = 0.20;
         /// How spread out the light source is (for soft shadows)
-        float lightSpread = 0.15;
+        float lightSpread = 0.25;
+        /// How many light points there are in the source (for soft shadows)
+        float numLights = 36;
         /// How much light a mirror reflects
         float reflectiveness = 0.75;
         /// How many times multiple mirrors can reflect light
-        int maxBounces = 5;
+        int maxBounces = 3;
         /// "Fuzziness" of metal
         float metalFuzz = 0.125;
         /// How many metal fuzz samples are taken to average over
         int fuzzSamples = 5;
         /// How big the lens radius is
         float aperture = 0.08;
-        /// How many samples are taken for depth of field 
+        /// How many samples are taken for depth of field
         int depthSamples = 16;
         /// The "shift" of a ray through glass material
-        float indexOfRefraction = 1.5;
-
-        //TODO: use these for optimisation
-//        glm::vec3 lastPos;
-//        glm::mat3 lastOri;
-//        bool hasRendered = false;
+        float indexOfRefraction = 1.5; 
 
         float lightLevel(const glm::vec3 &point);
         bool inShadow(const glm::vec3 &point, const glm::vec3 &normal, int triIndex, const glm::vec3 &light);

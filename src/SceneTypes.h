@@ -22,3 +22,9 @@ struct Material {
     Colour colour;
     std::string texture;
 };
+
+struct Photon {
+    glm::vec3 position;
+    glm::vec3 direction;
+    glm::vec3 power;
+};

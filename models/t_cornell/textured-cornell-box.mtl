@@ -25,3 +25,25 @@ Kd 0.000000 1.000000 1.000000
 newmtl Cobbles
 Kd 1.000000 1.000000 1.000000
 map_Kd texture.ppm
+
+# Custom Colours
+newmtl LeftWall
+Kd 0.780000 0.240000 0.340000
+
+newmtl RightWall
+Kd 0.880000 0.680000 0.240000
+
+newmtl BackWall
+Kd 0.620000 0.660000 0.720000
+
+newmtl Ceiling
+Kd 0.220000 0.640000 0.720000
+
+newmtl TallBox
+Kd 0.180000 0.420000 0.680000
+
+newmtl ShortBox
+Kd 0.760000 0.340000 0.200000
+
+newmtl Light
+Kd 0.950000 0.950000 0.920000

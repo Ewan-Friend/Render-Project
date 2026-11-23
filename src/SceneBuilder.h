@@ -43,4 +43,5 @@ public:
     ModelData cornellMirrorBall();
     ModelData kitchenSink();
     ModelData animatedSphere();
+    ModelData hackspace();
 };

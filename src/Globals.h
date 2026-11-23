@@ -11,6 +11,8 @@ extern const std::string BUNNY_OBJECT;
 extern const std::string BUNNY_MATERIAL;
 extern const std::string TEX_OBJECT;
 extern const std::string TEX_MATERIAL;
+extern const std::string HACK_OBJECT;
+extern const std::string HACK_MATERIAL;
 
 extern const std::string COBBLES;
 

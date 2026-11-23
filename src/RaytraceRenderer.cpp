@@ -76,9 +76,18 @@ float RaytraceRenderer::ShadowStrength(const glm::vec3 point, const glm::vec3 &n
     if (!isSoftShadowOn) return inShadow(point, normal, triIndex, lightPos);
     int totalChecked = 0;
     int totalBlocked = 0;
+
+    // Number of points close to a square shape
+    int numX = (int)std::sqrt(numLights);
+    int numZ = numLights / numX;
+    float stepX = (2 * lightSpread) / numX;
+    float stepZ = (2 * lightSpread) / numX;
+    float startX = -lightSpread + (stepX / 2);
+    float startZ = -lightSpread + (stepZ / 2);
+
     // Light are spread along the horizontal plane here (like the ceiling light)
-    for (int x = -1; x <= 1; x++){
-        for (int z = -1; z <= 1; z++){
+    for (float x = startX; x <= lightSpread; x += stepX){
+        for (float z = startZ; z <= lightSpread; z += stepZ){
             glm::vec3 smallLight = lightPos + glm::vec3(x * lightSpread, 0.0f, z * lightSpread);
             if (inShadow(point, normal, triIndex, smallLight)) totalBlocked++;
             totalChecked++;

@@ -116,11 +116,12 @@ ModelData SceneBuilder::cornellMirrorBall() {
 /// SCENE DESCRIPTION
 /// Cornell box with everything needed to showcase 
 ModelData SceneBuilder::kitchenSink() {
-    ModelData scene = createObject(COR_OBJECT, COR_MATERIAL)
+    ModelData scene = createObject(TEX_OBJECT, TEX_MATERIAL)
         .surfaceFace(Surface::Mirror, tallBoxFrontFace)
         .createObject(SPHERE_OBJECT, material, glm::vec3(-0.5, -1.1, 0.5), 0.8, Surface::Glass, true)
-        .createObject(SPHERE_OBJECT, material, glm::vec3(-0.3, 0.1, -0.3), 0.8, Surface::Metal, true)
+        .createObject(SPHERE_OBJECT, material, glm::vec3(-0.3, 0.05, -0.3), 0.8, Surface::Metal, true)
         .createObject(BUNNY_OBJECT, BUNNY_MATERIAL, offset, scale, Surface::Glass, true)
+        .createObject(HACK_OBJECT, HACK_MATERIAL, glm::vec3(0, 0, -0.5), 0.005)
         .build();
     return scene;
 } 
@@ -133,5 +134,14 @@ ModelData SceneBuilder::animatedSphere(){
     ANIM_START = triangles.size();
     createObject(SPHERE_OBJECT, material, glm::vec3(-0.5, -1.1, 0.5), 0.4, Surface::Glass, true);
     ANIM_COUNT = triangles.size() - ANIM_START;
+    return build();
+}
+
+/// SCENE DESCRIPTION
+/// Hackspace logo with animation attatched
+ModelData SceneBuilder::hackspace(){
+    createObject(HACK_OBJECT, HACK_MATERIAL, glm::vec3(-3, 0, 0), 0.002);
+    ANIM_START = 0;
+    ANIM_COUNT = triangles.size();
     return build();
 }

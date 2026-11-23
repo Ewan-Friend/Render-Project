@@ -46,8 +46,13 @@ ModelData parseObj(const std::string &filename, const std::unordered_map<std::st
         std::istringstream ss(line);
         std::string token;
         ss >> token;
-        if (token.empty()) continue;
 
+        if (token.empty()) continue;
+        if (token == "mtllib") {
+            std::string mtlFilename;
+            ss >> mtlFilename;
+            auto extraMaterials = parseMat(mtlFilename);
+        }
         if (token == "usemtl") {
             std::string material;
             ss >> material;
