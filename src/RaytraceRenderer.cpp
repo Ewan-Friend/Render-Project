@@ -6,6 +6,7 @@
 #include "RayTriangleIntersection.h"
 #include <CanvasPoint.h>
 #include <Colour.h>
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -267,6 +268,31 @@ glm::vec3 RaytraceRenderer::getReflectColour(
     return total / (float)samples;
 }
 
+glm::vec3 RaytraceRenderer::refract(glm::vec3 view, glm::vec3 normal, bool &didrefract){
+    bool enter = glm::dot(view, normal) < 0;
+    if (!enter) normal = -normal;
+    float eta1 = enter ? 1 : indexOfRefraction;
+    float eta2 = enter ? indexOfRefraction : 1;
+
+    float cosTheta = std::fmin(glm::dot(-view, normal), 1);
+    float sinTheta = std::sqrt(1 - cosTheta * cosTheta);
+    
+    glm::vec3 directedRay;
+    float refractionIndex = (enter) ? 1/indexOfRefraction : indexOfRefraction;
+
+    didrefract = refractionIndex * sinTheta <= 1;
+
+    if (!didrefract){
+        directedRay = glm::normalize(view - 2.0f * normal * (glm::dot(view, normal)));
+    } else {
+        glm::vec3 perpendicular = (eta1 / eta2) * (view + cosTheta * normal);
+        glm::vec3 parallel = -std::sqrt(std::fabs(1 - glm::dot(perpendicular, perpendicular))) * normal;
+        directedRay = perpendicular + parallel;
+    }
+
+    return directedRay;
+} 
+
 glm::vec3 RaytraceRenderer::getGlassColour(
     const glm::vec3 &point, 
     glm::vec3 normal, 
@@ -276,32 +302,158 @@ glm::vec3 RaytraceRenderer::getGlassColour(
     uint32_t seed
 ) {
     if (bouncesLeft <= 0) return getCubemapColour(view);
-
-    bool enter = glm::dot(view, normal) < 0;
-
-    if (!enter) normal = -normal;
-    float eta1 = enter ? 1 : indexOfRefraction;
-    float eta2 = enter ? indexOfRefraction : 1;
-
-    float cosTheta = std::fmin(glm::dot(-view, normal), 1);
-    float sinTheta = std::sqrt(1 - cosTheta * cosTheta);
-    
-    glm::vec3 directedRay;
-    glm::vec3 origin;
-    float refractionIndex = (enter) ? 1/indexOfRefraction : indexOfRefraction;
-
-    bool refract = refractionIndex * sinTheta <= 1;
-    if (!refract){
-        directedRay = glm::normalize(view - 2.0f * normal * (glm::dot(view, normal)));
-        origin = point + normal * 0.001f;
-    } else {
-        glm::vec3 perpendicular = (eta1 / eta2) * (view + cosTheta * normal);
-        glm::vec3 parallel = -std::sqrt(std::fabs(1 - glm::dot(perpendicular, perpendicular))) * normal;
-        directedRay = perpendicular + parallel;
-        origin = point - normal * 0.001f;
-    }
+    bool didRefract;
+    glm::vec3 directedRay = refract(view, normal, didRefract);
     return rayTrace(point, directedRay, seed, bouncesLeft - 1);
 }
+
+void RaytraceRenderer::tracePhoton(glm::vec3 origin, glm::vec3 dir, glm::vec3 power, uint32_t &seed){
+    bool specular = false;
+    int ignoreIndex = -1;
+    for (int b = 0; b < photonBounces; b++){
+        RayTriangleIntersection intersection = 
+            getClosestIntersection(origin, dir, triangles, ignoreIndex);
+
+        if (intersection.distanceFromCamera > renderDistance) { return; }
+
+        glm::vec3 point = intersection.intersectionPoint;
+        ModelTriangle tri = intersection.intersectedTriangle;
+        int triIndex = intersection.triangleIndex;
+
+        Surface surface = surfaces[triIndex];
+        if (surface == Surface::Mirror && !isReflectionOn) surface = Surface::Base;
+        if (surface == Surface::Metal && !isMetalOn) surface = Surface::Base;
+        if (surface == Surface::Glass && !isGlassOn) surface = Surface::Base;
+        glm::vec3 normal = tri.normal;
+
+        glm::vec3 newOrigin = point;
+        glm::vec3 newDir = dir;
+
+        float roullete = 0;
+        float reflectChance = 0.1f;
+        bool didRefract;
+        bool absorbed = false;
+
+        switch(surface){
+            case Surface::Mirror:
+                if (!isReflectionOn) break;
+                if (glm::dot(normal, dir) > 0) normal = -normal;
+                newDir = glm::normalize(dir - 2.0f * normal * (glm::dot(dir, normal)));
+                newOrigin = point + normal * 0.001f;
+                specular = true;
+                break;
+            case Surface::Metal:
+                if (!isMetalOn) break;
+                if (glm::dot(normal, dir) > 0) normal = -normal;
+                newDir = glm::normalize(dir - 2.0f * normal * (glm::dot(dir, normal)));
+                newOrigin = point + normal * 0.001f;
+                specular = true;
+                break;
+            case Surface::Glass:
+                roullete = rand_r(&seed) / (float)RAND_MAX;
+                newDir = refract(dir, normal, didRefract);
+                if (glm::dot(normal, dir) > 0) normal = -normal;
+                if (!didRefract || roullete < reflectChance){
+                    newDir = glm::normalize(dir - 2.0f * normal * (glm::dot(dir, normal)));
+                    newOrigin = point + normal * 0.001f;
+                } else {
+                    newOrigin = point - normal * 0.001f;
+                } 
+                specular = true;
+                break;
+            default:
+                if (specular){
+                    Photon newPhoton;
+                    newPhoton.position = point;
+                    newPhoton.direction = dir;
+                    newPhoton.power = power;
+                    photons.push_back(newPhoton);
+                }
+                absorbed = true;
+                break;
+        }
+        
+        if (absorbed) return;
+        
+        origin = newOrigin;
+        dir = newDir;
+        ignoreIndex = triIndex;
+    }
+}
+
+static int dim = 0;
+static bool photonLess(const Photon &a, const Photon &b) {
+    if (dim == 0) return a.position.x < b.position.x;
+    else if (dim == 1) return a.position.y < b.position.y;
+    else return a.position.z < b.position.z;
+}
+
+void RaytraceRenderer::buildPhotonMap(){
+    photons.clear();
+    for (int i = 0; i < numPhotons; i++){
+        uint32_t seed = i * 69 + 420;
+        glm::vec3 dir = randomUnitVector(seed);
+        if (dir.y > 0) dir.y = -dir.y;
+        float power = (255.0f * lightStrength) / numPhotons;
+        tracePhoton(lightPos, dir, glm::vec3(power), seed);
+    }
+    buildKdTree(0, photons.size(), 0);
+}
+
+void RaytraceRenderer::buildKdTree(int lowest, int highest, int depth){
+    if (lowest >= highest) return;
+    int midpoint = (lowest + highest) / 2;
+    dim = depth % 3;
+
+    // Faster than straight up sorting (keeps the midpoint in the right place)
+    std::nth_element(photons.begin() + lowest, 
+            photons.begin() + midpoint, 
+            photons.begin() + highest,
+            photonLess
+    );
+
+    buildKdTree(lowest, midpoint, depth + 1);
+    buildKdTree(midpoint + 1, highest, depth + 1);
+}
+
+
+glm::vec3 RaytraceRenderer::sumPhotons(int lowest, int highest, int depth, const glm::vec3 &point, const glm::vec3 &normal){
+    glm::vec3 sum(0);
+    if (lowest >= highest) return sum;
+    int midpoint = (lowest + highest) / 2;
+    int dimension = depth % 3;
+    const Photon &p = photons[midpoint];
+
+    
+    if (glm::dot(p.position - point, p.position - point) < photonRadius * photonRadius
+            && glm::dot(-p.direction, normal) > 0) 
+            sum += p.power; 
+
+    float diff = point[dimension] - p.position[dimension];
+    
+    int min, max, fmin, fmax;
+    if (diff < 0){
+        min = lowest;
+        max = midpoint; 
+        fmin = midpoint + 1;
+        fmax = highest;
+    } else {
+        min = midpoint + 1;
+        max = highest;
+        fmin = lowest;
+        fmax = midpoint;
+    }
+
+    sum += sumPhotons(min, max, depth + 1, point, normal);
+    if (std::fabs(diff) < photonRadius) sum += sumPhotons(fmin, fmax, depth + 1, point, normal);
+    return sum;
+}
+
+glm::vec3 RaytraceRenderer::getCaustic(const glm::vec3 &point, const glm::vec3 &normal){
+    glm::vec3 sum = sumPhotons(0, photons.size(), 0, point, normal);
+    glm::vec3 causticVal = sum / (float)(PI * photonRadius * photonRadius) * caustic;
+    return causticVal;
+} 
 
 /// Calculates the brightness of a single point
 glm::vec3 RaytraceRenderer::calculatePointColour(
@@ -320,6 +472,12 @@ glm::vec3 RaytraceRenderer::calculatePointColour(
     float pureSpecular = specularLight(point, normal, specularExponent, view);
     float specular = direct * pureSpecular;
 
+    /// Caustic lighting (from that damned photon mapping)
+    glm::vec3 caustic(0);
+    if (isPhotonOn){
+        caustic = getCaustic(point, normal);
+    }
+
     Colour c = (textureTriangles[index].empty()) 
         ? tri.colour 
         : getTextureColour(tri, point, index);
@@ -328,7 +486,7 @@ glm::vec3 RaytraceRenderer::calculatePointColour(
     c.green = c.green * brightness + 255.0f * specular;
     c.blue = c.blue * brightness + 255.0f * specular;
 
-    return glm::vec3(float(c.red), float(c.green), float(c.blue));
+    return glm::vec3(float(c.red), float(c.green), float(c.blue)) + caustic;
 }
 
 /// Applies Gouraud Shading to interpolate brighness from vertex normals
@@ -474,6 +632,7 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
         loaded = true;
     }
     triangles = SCENE_TRIANGLES;
+    if (isPhotonOn) buildPhotonMap();
 
     #pragma omp parallel for schedule(dynamic, 16)
     for (int x = 0; x < WIDTH; x++){

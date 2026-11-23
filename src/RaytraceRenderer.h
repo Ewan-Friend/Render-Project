@@ -20,6 +20,7 @@ class RaytraceRenderer: public Renderer {
         RaytraceRenderer(Camera &c) : camera(c) {}
         void draw(DrawingWindow &window) override;
 
+        // Data
         std::vector<ModelTriangle> triangles;
         std::vector<std::array<glm::vec3, 3>> vertexNormals;
         std::vector<std::string> textureTriangles;
@@ -27,6 +28,7 @@ class RaytraceRenderer: public Renderer {
         std::vector<Surface> surfaces;
         std::vector<TextureMap> cubemapFaces;
         std::vector<bool> shadings;
+        std::vector<Photon> photons;
 
         /// Base position of the light
         glm::vec3 lightPos = glm::vec3(0, 0.8, 0);
@@ -41,6 +43,7 @@ class RaytraceRenderer: public Renderer {
         bool isEnvironmentOn = true;
         bool isGlassOn = true;
         bool isDepthOn = false;
+        bool isPhotonOn = true;
     private:
         Camera &camera;
         /// The maximum distance the camera will render
@@ -50,7 +53,7 @@ class RaytraceRenderer: public Renderer {
         /// "Strength" of the specular lighting (shininess)
         int specularExponent = 128;
         /// How dark a pixel can be
-        float minBrightnessThreshold = 0.20;
+        float minBrightnessThreshold = 0.15;
         /// How spread out the light source is (for soft shadows)
         float lightSpread = 0.25;
         /// How many light points there are in the source (for soft shadows)
@@ -69,6 +72,14 @@ class RaytraceRenderer: public Renderer {
         int depthSamples = 16;
         /// The "shift" of a ray through glass material
         float indexOfRefraction = 1.5; 
+        /// How many bounces a photon can go through at the maximum
+        int photonBounces = 5;
+        /// How many phtons are cast
+        int numPhotons = 500000;
+        /// How far a photon has to be to be considered by a point
+        float photonRadius = 0.2;
+        /// Multiply brightness of the caustic part
+        float caustic = 1;
 
         float lightLevel(const glm::vec3 &point);
         bool inShadow(const glm::vec3 &point, const glm::vec3 &normal, int triIndex, const glm::vec3 &light);
@@ -91,6 +102,11 @@ class RaytraceRenderer: public Renderer {
             glm::vec3 albedo = glm::vec3(1.0f),
             uint32_t seed = 0
         );
+        glm::vec3 refract(
+                glm::vec3 view,
+                glm::vec3 normal,
+                bool &didrefract
+        );
         glm::vec3 getGlassColour(
             const glm::vec3 &point, 
             glm::vec3 normal, 
@@ -98,6 +114,29 @@ class RaytraceRenderer: public Renderer {
             glm::vec3 view, 
             int bouncesLeft,
             uint32_t seed
+        );
+        void tracePhoton(
+            glm::vec3 origin, 
+            glm::vec3 dir, 
+            glm::vec3 power, 
+            uint32_t &seed
+        );
+        void buildPhotonMap();
+        void buildKdTree(
+            int lowest, 
+            int highest, 
+            int depth
+        );
+        glm::vec3 sumPhotons(
+            int lowest,
+            int highest,
+            int depth,
+            const glm::vec3 &point,
+            const glm::vec3 &normal
+        );
+        glm::vec3 getCaustic(
+            const glm::vec3 &point,
+            const glm::vec3 &normal
         );
         glm::vec3 calculatePointColour(
             const glm::vec3 &point, 
@@ -118,5 +157,4 @@ class RaytraceRenderer: public Renderer {
         glm::vec3 rayTrace(glm::vec3 origin, glm::vec3 direction, uint32_t seed, int bouncesLeft, int ignoreIndex = -1);
         void animateBounce(int frame);
         bool loaded = false;
-
 };
