@@ -391,7 +391,7 @@ static bool photonLess(const Photon &a, const Photon &b) {
 void RaytraceRenderer::buildPhotonMap(){
     photons.clear();
     for (int i = 0; i < numPhotons; i++){
-        uint32_t seed = i * 69 + 420;
+        uint32_t seed = i * 696867112233 + 420421422528;
         glm::vec3 dir = randomUnitVector(seed);
         if (dir.y > 0) dir.y = -dir.y;
         float power = (255.0f * lightStrength) / numPhotons;

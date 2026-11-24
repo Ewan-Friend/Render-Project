@@ -88,12 +88,13 @@ build/MainApplication.o: src/MainApplication.cpp src/Globals.h \
   libs/glm-0.9.7.2/glm/integer.hpp \
   libs/glm-0.9.7.2/glm/detail/func_integer.hpp \
   libs/glm-0.9.7.2/glm/detail/func_integer.inl libs/sdw/Colour.h \
-  libs/sdw/TexturePoint.h src/SceneTypes.h src/Renderer.h \
-  libs/sdw/DrawingWindow.h /usr/include/SDL2/SDL.h \
-  /usr/include/SDL2/SDL_main.h /usr/include/SDL2/SDL_stdinc.h \
-  /usr/include/SDL2/SDL_config.h /usr/include/SDL2/begin_code.h \
-  /usr/include/SDL2/close_code.h /usr/include/SDL2/SDL_assert.h \
-  /usr/include/SDL2/SDL_atomic.h /usr/include/SDL2/SDL_platform.h \
+  libs/sdw/TexturePoint.h src/SceneTypes.h src/WireframeRenderer.h \
+  src/Camera.h libs/sdw/CanvasPoint.h libs/sdw/DrawingWindow.h \
+  /usr/include/SDL2/SDL.h /usr/include/SDL2/SDL_main.h \
+  /usr/include/SDL2/SDL_stdinc.h /usr/include/SDL2/SDL_config.h \
+  /usr/include/SDL2/SDL_platform.h /usr/include/SDL2/begin_code.h \
+  /usr/include/SDL2/close_code.h /usr/include/SDL2/SDL_config_unix.h \
+  /usr/include/SDL2/SDL_assert.h /usr/include/SDL2/SDL_atomic.h \
   /usr/include/SDL2/SDL_audio.h /usr/include/SDL2/SDL_error.h \
   /usr/include/SDL2/SDL_endian.h /usr/include/SDL2/SDL_mutex.h \
   /usr/include/SDL2/SDL_thread.h /usr/include/SDL2/SDL_rwops.h \
@@ -114,11 +115,10 @@ build/MainApplication.o: src/MainApplication.cpp src/Globals.h \
   /usr/include/SDL2/SDL_render.h /usr/include/SDL2/SDL_shape.h \
   /usr/include/SDL2/SDL_system.h /usr/include/SDL2/SDL_timer.h \
   /usr/include/SDL2/SDL_version.h /usr/include/SDL2/SDL_locale.h \
-  /usr/include/SDL2/SDL_misc.h libs/sdw/Utils.h src/RasterisedRenderer.h \
-  libs/sdw/CanvasPoint.h libs/sdw/CanvasTriangle.h src/SceneBuilder.h \
-  src/WireframeRenderer.h src/Camera.h src/ModelRenderer.h \
-  src/RaytraceRenderer.h libs/sdw/TextureMap.h \
-  libs/sdw/RayTriangleIntersection.h src/Ident.h
+  /usr/include/SDL2/SDL_misc.h src/Renderer.h libs/sdw/Utils.h \
+  src/ModelRenderer.h src/RaytraceRenderer.h libs/sdw/TextureMap.h \
+  libs/sdw/RayTriangleIntersection.h src/RasterisedRenderer.h \
+  libs/sdw/CanvasTriangle.h src/SceneBuilder.h src/Ident.h
 src/Globals.h:
 libs/sdw/ModelTriangle.h:
 libs/glm-0.9.7.2/glm/glm.hpp:
@@ -215,17 +215,20 @@ libs/glm-0.9.7.2/glm/detail/func_integer.inl:
 libs/sdw/Colour.h:
 libs/sdw/TexturePoint.h:
 src/SceneTypes.h:
-src/Renderer.h:
+src/WireframeRenderer.h:
+src/Camera.h:
+libs/sdw/CanvasPoint.h:
 libs/sdw/DrawingWindow.h:
 /usr/include/SDL2/SDL.h:
 /usr/include/SDL2/SDL_main.h:
 /usr/include/SDL2/SDL_stdinc.h:
 /usr/include/SDL2/SDL_config.h:
+/usr/include/SDL2/SDL_platform.h:
 /usr/include/SDL2/begin_code.h:
 /usr/include/SDL2/close_code.h:
+/usr/include/SDL2/SDL_config_unix.h:
 /usr/include/SDL2/SDL_assert.h:
 /usr/include/SDL2/SDL_atomic.h:
-/usr/include/SDL2/SDL_platform.h:
 /usr/include/SDL2/SDL_audio.h:
 /usr/include/SDL2/SDL_error.h:
 /usr/include/SDL2/SDL_endian.h:
@@ -267,15 +270,13 @@ libs/sdw/DrawingWindow.h:
 /usr/include/SDL2/SDL_version.h:
 /usr/include/SDL2/SDL_locale.h:
 /usr/include/SDL2/SDL_misc.h:
+src/Renderer.h:
 libs/sdw/Utils.h:
-src/RasterisedRenderer.h:
-libs/sdw/CanvasPoint.h:
-libs/sdw/CanvasTriangle.h:
-src/SceneBuilder.h:
-src/WireframeRenderer.h:
-src/Camera.h:
 src/ModelRenderer.h:
 src/RaytraceRenderer.h:
 libs/sdw/TextureMap.h:
 libs/sdw/RayTriangleIntersection.h:
+src/RasterisedRenderer.h:
+libs/sdw/CanvasTriangle.h:
+src/SceneBuilder.h:
 src/Ident.h:

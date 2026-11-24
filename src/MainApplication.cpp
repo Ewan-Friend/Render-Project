@@ -62,14 +62,18 @@ int ANIM_START;
 int ANIM_COUNT;
 // PICK SCENE HERE
 // TODO: ADD ARGUMENT TO PICK SCENE (MAYBE OVERKILL NO?)
-void loadScene() {
-    const ModelData scene = sceneBuilder.kitchenSink(); 
+void loadScene(bool complex) {
+    const ModelData scene = complex 
+        ? sceneBuilder.kitchenSink() 
+        : sceneBuilder.animatedSphere();
     SCENE_TRIANGLES = scene.triangles;
     SCENE_BASE_TRIANGLES = scene.triangles;
     SCENE_VERTEX_NORMALS = scene.vertexNormals;
     SCENE_TEXTURE_TRIANGLES = scene.textureTriangles;
     SCENE_SURFACES = scene.surfaces;
     SCENE_SHADINGS = scene.shadings;
+
+    raytraceRenderer.loaded = false;
 }
 
 void animateScene(int frame) {
@@ -182,16 +186,16 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
         // toggle depth of field
         else if (event.key.keysym.sym == SDLK_f) raytraceRenderer.isDepthOn = !raytraceRenderer.isDepthOn;
         else if (event.key.keysym.sym == SDLK_SPACE){ 
-            ident.initialise(camera);
-            savingFrames = true;
-            frameCounter = 0;
+            ident.initialise(camera, raytraceRenderer);
+            savingFrames = true;
+            frameCounter = 0;
         }
 	}
 }
 
 int main(int argc, char *argv[]) {
 	SDL_Event event;
-    loadScene();
+    loadScene(true);
 	while (true) {
         if (redraw){
             currentRenderer->draw(window);
@@ -202,19 +206,18 @@ int main(int argc, char *argv[]) {
 		// In C++ we can't use "." notation for dynamic dispatch, so we have to use -> instead :o(
 //      currentRenderer->draw(window);
 
-        if (ident.active) ident.step(camera);
+        if (ident.active) ident.step(camera, raytraceRenderer);
         if (!ident.active) savingFrames = false;
 
 		// Need to ask the SDL window to render the frame, otherwise nothing actually gets shown on the screen !
 		window.renderFrame();
 
 		if(savingFrames) {
-			std::string paddedCounter = std::to_string(frameCounter);
+			std::string paddedCounter = std::to_string(ident.frame);
 			while(paddedCounter.length() < 6) paddedCounter = "0" + paddedCounter;
 			// Use whichever image file format works best on your platform (comment out the one you don't need)
 			window.savePPM("saved-frames", paddedCounter + ".ppm");
 			window.saveBMP("saved-frames", paddedCounter + ".bmp");
-			frameCounter++;
 		}
 	}
 }

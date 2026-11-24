@@ -3,6 +3,9 @@
 #include <vector>
 #include "ModelTriangle.h"
 #include "SceneTypes.h"
+#include "WireframeRenderer.h"
+#include "ModelRenderer.h"
+#include "RaytraceRenderer.h"
 
 extern const std::string COR_OBJECT;
 extern const std::string COR_MATERIAL;
@@ -27,3 +30,11 @@ extern int SCENE_VERSION;
 extern int ANIM_START;
 extern int ANIM_COUNT;
 void animateScene(int frame);
+
+extern Renderer* currentRenderer;
+extern ModelRenderer modelRenderer;
+extern RaytraceRenderer raytraceRenderer;
+extern WireframeRenderer wireframeRenderer;
+
+void loadScene(bool complex=true);
+

@@ -44,6 +44,15 @@ class RaytraceRenderer: public Renderer {
         bool isGlassOn = true;
         bool isDepthOn = false;
         bool isPhotonOn = true;
+        
+        /// "Size" of the lens opening
+        float aperture = 0.08;
+        /// How many light points there are in the source (for soft shadows)
+        float numLights = 36;
+        /// "Fuzziness" of metal
+        float metalFuzz = 0.125;
+
+        bool loaded = false;
     private:
         Camera &camera;
         /// The maximum distance the camera will render
@@ -56,22 +65,16 @@ class RaytraceRenderer: public Renderer {
         float minBrightnessThreshold = 0.15;
         /// How spread out the light source is (for soft shadows)
         float lightSpread = 0.25;
-        /// How many light points there are in the source (for soft shadows)
-        float numLights = 36;
         /// How much light a mirror reflects
         float reflectiveness = 0.75;
         /// How many times multiple mirrors can reflect light
         int maxBounces = 3;
-        /// "Fuzziness" of metal
-        float metalFuzz = 0.125;
         /// How many metal fuzz samples are taken to average over
         int fuzzSamples = 5;
-        /// How big the lens radius is
-        float aperture = 0.08;
         /// How many samples are taken for depth of field
         int depthSamples = 16;
         /// The "shift" of a ray through glass material
-        float indexOfRefraction = 1.5; 
+        float indexOfRefraction = 1.5;
         /// How many bounces a photon can go through at the maximum
         int photonBounces = 5;
         /// How many phtons are cast
@@ -156,5 +159,4 @@ class RaytraceRenderer: public Renderer {
         );
         glm::vec3 rayTrace(glm::vec3 origin, glm::vec3 direction, uint32_t seed, int bouncesLeft, int ignoreIndex = -1);
         void animateBounce(int frame);
-        bool loaded = false;
 };

@@ -47,8 +47,14 @@ SceneBuilder& SceneBuilder::surfaceFace(Surface surface, std::vector<int> triInd
 }
 
 /// Return model data from the scene
-ModelData SceneBuilder::build() const {
-    return {triangles, vertexNormals, textureTriangles, surfaces, shadings};
+ModelData SceneBuilder::build() {
+    ModelData result = {triangles, vertexNormals, textureTriangles, surfaces, shadings};
+    triangles.clear();
+    vertexNormals.clear();
+    textureTriangles.clear();
+    surfaces.clear();
+    shadings.clear();
+    return result;
 }
 
 /// SCENE DESCRIPTION:
@@ -132,7 +138,7 @@ ModelData SceneBuilder::animatedSphere(){
     createObject(COR_OBJECT, COR_MATERIAL);
     surfaceFace(Surface::Mirror, backWall);
     ANIM_START = triangles.size();
-    createObject(SPHERE_OBJECT, material, glm::vec3(-0.5, -1.1, 0.5), 0.4, Surface::Glass, true);
+    createObject(SPHERE_OBJECT, material, glm::vec3(-0.5, -1.0, 0.5), 0.4, Surface::Glass, true);
     ANIM_COUNT = triangles.size() - ANIM_START;
     return build();
 }

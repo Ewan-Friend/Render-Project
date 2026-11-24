@@ -31,7 +31,7 @@ public:
                                bool shading = false
     );
     SceneBuilder& surfaceFace(Surface surface, std::vector<int> triIndexes);
-    ModelData build() const; 
+    ModelData build(); 
 
     // ---------- Scenes ---------
     ModelData cornellScene();
