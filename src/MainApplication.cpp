@@ -41,7 +41,7 @@ ModelRenderer modelRenderer = ModelRenderer(camera);
 RaytraceRenderer raytraceRenderer = RaytraceRenderer(camera);
 WireframeRenderer wireframeRenderer = WireframeRenderer(camera);
 
-Renderer* currentRenderer = &raytraceRenderer;
+Renderer* currentRenderer = &wireframeRenderer;
 bool savingFrames = false;
 int frameCounter = 0;
 bool redraw = true;
@@ -78,7 +78,7 @@ void loadScene(bool complex) {
 
 void animateScene(int frame) {
     float gravity = 0.003f;
-    float floor_height = 0.07f;
+    float floor_height = 0.0f;
     int squash_length = 6;
     float squash_strength = 0.6;
     static float y = 1.3f, velY = 0.0f, squash = 0.0f;
@@ -206,7 +206,8 @@ int main(int argc, char *argv[]) {
 		// In C++ we can't use "." notation for dynamic dispatch, so we have to use -> instead :o(
 //      currentRenderer->draw(window);
 
-        if (ident.active) ident.step(camera, raytraceRenderer);
+        if (ident.active) ident.step(camera, raytraceRenderer);
+
         if (!ident.active) savingFrames = false;
 
 		// Need to ask the SDL window to render the frame, otherwise nothing actually gets shown on the screen !

@@ -69,7 +69,6 @@ void Camera::orbitUp(float t) {
 void Camera::reset() {
     position = glm::vec3(0, 0, 3.5f);
     orientation = glm::mat3(1.0f);
-    spinning = !spinning;
 }
 
 /// Called every frame

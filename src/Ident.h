@@ -9,10 +9,12 @@ public:
 
     bool active = false;
     int frame = 0;
+    int startFrame = 305;
 
     void initialise(Camera &camera, RaytraceRenderer &rt);
     void step(Camera &camera, RaytraceRenderer &rt);
 private:
-    float theta = glm::radians(2.0f);
     bool &redraw;
+    float orbitStep;
+    float moveStep;
 };
