@@ -117,6 +117,10 @@ void Ident::step(Camera &camera, RaytraceRenderer &rt) {
         camera.pan(angle - prevAngle);
         prevAngle = angle;
     }
+    else {
+        active = false;
+        return;
+    }
 
 
     frame++;

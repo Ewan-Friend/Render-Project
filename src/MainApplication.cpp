@@ -185,7 +185,7 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
         // ADDITIONAL
         // toggle depth of field
         else if (event.key.keysym.sym == SDLK_f) raytraceRenderer.isDepthOn = !raytraceRenderer.isDepthOn;
-        else if (event.key.keysym.sym == SDLK_SPACE){ 
+        else if (event.key.keysym.sym == SDLK_SPACE && event.key.repeat == 0){ 
             ident.initialise(camera, raytraceRenderer);
             savingFrames = true;
             frameCounter = 0;
