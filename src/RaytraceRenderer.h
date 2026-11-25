@@ -44,17 +44,8 @@ class RaytraceRenderer: public Renderer {
         bool isGlassOn = true;
         bool isDepthOn = false;
         bool isPhotonOn = true;
-        
-        /// "Size" of the lens opening
-        float aperture = 0.08;
-        /// How many light points there are in the source (for soft shadows)
-        float numLights = 36;
-        /// "Fuzziness" of metal
-        float metalFuzz = 0.125;
+        bool photonsBuilt = false;
 
-        bool loaded = false;
-    private:
-        Camera &camera;
         /// The maximum distance the camera will render
         float renderDistance = FLT_MAX;
         /// How bright the light is
@@ -63,14 +54,20 @@ class RaytraceRenderer: public Renderer {
         int specularExponent = 128;
         /// How dark a pixel can be
         float minBrightnessThreshold = 0.15;
+        /// How many light points there are in the source (for soft shadows)
+        float numLights = 32;
         /// How spread out the light source is (for soft shadows)
         float lightSpread = 0.25;
         /// How much light a mirror reflects
         float reflectiveness = 0.75;
         /// How many times multiple mirrors can reflect light
         int maxBounces = 3;
+        /// "Fuzziness" of metal
+        float metalFuzz = 0.125;
         /// How many metal fuzz samples are taken to average over
         int fuzzSamples = 5;
+        /// "Size" of the lens opening
+        float aperture = 0.08;
         /// How many samples are taken for depth of field
         int depthSamples = 16;
         /// The "shift" of a ray through glass material
@@ -83,6 +80,10 @@ class RaytraceRenderer: public Renderer {
         float photonRadius = 0.2;
         /// Multiply brightness of the caustic part
         float caustic = 1;
+
+        bool loaded = false;
+    private:
+        Camera &camera;
 
         float lightLevel(const glm::vec3 &point);
         bool inShadow(const glm::vec3 &point, const glm::vec3 &normal, int triIndex, const glm::vec3 &light);

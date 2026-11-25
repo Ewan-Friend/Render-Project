@@ -304,7 +304,7 @@ glm::vec3 RaytraceRenderer::getGlassColour(
     if (bouncesLeft <= 0) return getCubemapColour(view);
     bool didRefract;
     glm::vec3 directedRay = refract(view, normal, didRefract);
-    return rayTrace(point, directedRay, seed, bouncesLeft - 1);
+    return rayTrace(point + directedRay * 0.001f, directedRay, seed, bouncesLeft - 1);
 }
 
 void RaytraceRenderer::tracePhoton(glm::vec3 origin, glm::vec3 dir, glm::vec3 power, uint32_t &seed){
@@ -578,7 +578,7 @@ glm::vec3 RaytraceRenderer::rayTrace(glm::vec3 origin, glm::vec3 direction, uint
                         point, normal, triIndex, direction, bouncesLeft,
                         metalFuzz, tint, seed);
                 } else if (surfaces[triIndex] == Surface::Glass && isGlassOn){
-
+                    c = getGlassColour(point, normal, triIndex, direction, bouncesLeft, seed);
                 } else {
                     c = gouraudShading(intersection, point, vNormals);
                 }
@@ -632,8 +632,10 @@ void RaytraceRenderer::draw(DrawingWindow &window) {
         loaded = true;
     }
     triangles = SCENE_TRIANGLES;
-    if (isPhotonOn) buildPhotonMap();
-
+    if (isPhotonOn && !photonsBuilt) {
+        buildPhotonMap();
+        photonsBuilt = true;
+    }
     #pragma omp parallel for schedule(dynamic, 16)
     for (int x = 0; x < WIDTH; x++){
         for (int y = 0; y < HEIGHT; y++){

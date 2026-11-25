@@ -198,7 +198,9 @@ int main(int argc, char *argv[]) {
     loadScene(true);
 	while (true) {
         if (redraw){
+            std::cout << "drawing frame " << ident.frame << std::endl;
             currentRenderer->draw(window);
+            std::cout << "done" << std::endl;
             redraw = false;
         }
 		// We MUST poll for events - otherwise the window will freeze !
