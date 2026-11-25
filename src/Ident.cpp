@@ -202,7 +202,7 @@ void Ident::step(Camera &camera, RaytraceRenderer &rt) {
         float t = ease(progress(frame, DOF, 120));
         camera.focalDistance = glm::mix(2.5f, 5.5f, t);
     }
-    // Photon caustics, off then on
+    // Photon caustics diff
     else if (frame < END) {
         if (frame == PHOTON) {
             rt.isDepthOn = false;
